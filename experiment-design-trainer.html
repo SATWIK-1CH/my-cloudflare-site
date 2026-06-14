@@ -1,0 +1,1104 @@
+<!-- Experiment Design Trainer — a LeetCode-style concept tracker for DS interview prep -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Experiment Design Trainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;450;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#EEF0F4;
+    --surface:#FFFFFF;
+    --rail:#12141C;
+    --rail-2:#1B1E2A;
+    --rail-3:#262A3A;
+    --rail-ink:#E8EAF2;
+    --rail-soft:#8B90A6;
+    --ink:#181A21;
+    --ink-soft:#5C6275;
+    --ink-faint:#878DA0;
+    --line:#E4E6EE;
+    --line-soft:#EFF1F6;
+    --accent:#5849E0;
+    --accent-soft:#EEEBFC;
+    --mastered:#138A63;
+    --mastered-soft:#E2F3EC;
+    --learning:#C0780E;
+    --learning-soft:#FBF0DC;
+    --todo:#9AA0B4;
+    --trap:#CE2E55;
+    --trap-soft:#FBE7ED;
+    --radius:14px;
+    --shadow:0 1px 2px rgba(20,22,34,.05), 0 8px 24px -12px rgba(20,22,34,.18);
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --display:'Space Grotesk',sans-serif;
+    --body:'Inter',system-ui,sans-serif;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    font-family:var(--body);
+    background:var(--bg);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    line-height:1.55;
+  }
+  .app{
+    display:grid;
+    grid-template-columns:380px 1fr;
+    height:100vh;
+    min-height:0;
+  }
+
+  /* ---------- RAIL (left) ---------- */
+  .rail{
+    background:var(--rail);
+    color:var(--rail-ink);
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+    border-right:1px solid #000;
+  }
+  .rail-head{
+    padding:22px 22px 16px;
+    border-bottom:1px solid var(--rail-3);
+  }
+  .brand{
+    display:flex;align-items:baseline;gap:10px;
+  }
+  .brand .mark{
+    font-family:var(--mono);
+    font-size:12px;font-weight:600;letter-spacing:.5px;
+    color:#000;background:var(--rail-ink);
+    padding:3px 7px;border-radius:6px;
+  }
+  .brand h1{
+    font-family:var(--display);
+    font-size:18px;font-weight:600;letter-spacing:-.01em;margin:0;
+    color:var(--rail-ink);
+  }
+  .brand .sub{
+    display:block;font-size:11px;color:var(--rail-soft);
+    font-family:var(--mono);letter-spacing:.3px;margin-top:2px;
+  }
+
+  /* confidence bar — the signature CI motif */
+  .conf{
+    margin-top:18px;
+  }
+  .conf-top{
+    display:flex;justify-content:space-between;align-items:baseline;
+    font-size:11px;color:var(--rail-soft);
+    font-family:var(--mono);letter-spacing:.4px;text-transform:uppercase;
+    margin-bottom:7px;
+  }
+  .conf-top b{color:var(--rail-ink);font-weight:600}
+  .conf-bar{
+    height:8px;border-radius:99px;background:var(--rail-3);
+    display:flex;overflow:hidden;
+  }
+  .conf-seg{height:100%;transition:width .4s ease}
+  .conf-seg.m{background:var(--mastered)}
+  .conf-seg.l{background:var(--learning)}
+  .conf-legend{
+    display:flex;gap:14px;margin-top:9px;
+    font-size:10.5px;font-family:var(--mono);color:var(--rail-soft);
+  }
+  .conf-legend span{display:flex;align-items:center;gap:5px}
+  .dot{width:8px;height:8px;border-radius:99px;flex:none}
+  .dot.m{background:var(--mastered)}
+  .dot.l{background:var(--learning)}
+  .dot.t{background:var(--todo)}
+
+  .rail-controls{padding:14px 22px;border-bottom:1px solid var(--rail-3)}
+  .search{
+    width:100%;background:var(--rail-2);border:1px solid var(--rail-3);
+    color:var(--rail-ink);border-radius:9px;padding:9px 12px;
+    font-family:var(--body);font-size:13.5px;outline:none;
+  }
+  .search::placeholder{color:var(--rail-soft)}
+  .search:focus{border-color:var(--accent)}
+  .filters{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+  .chip{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.3px;
+    padding:5px 9px;border-radius:7px;cursor:pointer;
+    background:var(--rail-2);color:var(--rail-soft);
+    border:1px solid transparent;white-space:nowrap;
+    transition:background .15s,color .15s;
+  }
+  .chip:hover{color:var(--rail-ink)}
+  .chip.on{background:var(--rail-ink);color:#000;font-weight:600}
+
+  .list{flex:1;overflow-y:auto;padding:8px 12px 30px}
+  .grp-label{
+    font-family:var(--mono);font-size:10px;letter-spacing:1px;
+    text-transform:uppercase;color:var(--rail-soft);
+    padding:14px 10px 6px;
+  }
+  .item{
+    position:relative;display:flex;align-items:flex-start;gap:11px;
+    padding:11px 12px 11px 14px;border-radius:10px;cursor:pointer;
+    border:1px solid transparent;
+  }
+  .item:hover{background:var(--rail-2)}
+  .item.active{background:var(--rail-2);border-color:var(--rail-3)}
+  .item .spine{
+    position:absolute;left:3px;top:12px;bottom:12px;width:3px;
+    border-radius:99px;background:var(--todo);
+  }
+  .item[data-st="learning"] .spine{background:var(--learning)}
+  .item[data-st="mastered"] .spine{background:var(--mastered)}
+  .item .num{
+    font-family:var(--mono);font-size:11px;color:var(--rail-soft);
+    margin-top:1px;min-width:22px;
+  }
+  .item .body{min-width:0}
+  .item .t{
+    font-size:13.5px;font-weight:500;color:var(--rail-ink);
+    line-height:1.35;
+  }
+  .item .meta{
+    font-family:var(--mono);font-size:10px;color:var(--rail-soft);
+    margin-top:4px;letter-spacing:.2px;
+  }
+  .item .check{
+    margin-left:auto;font-size:13px;flex:none;margin-top:1px;opacity:.9;
+  }
+
+  /* ---------- WORKSHEET (right) ---------- */
+  .sheet{overflow-y:auto;min-height:0}
+  .sheet-inner{max-width:780px;margin:0 auto;padding:40px 48px 120px}
+
+  .crumbs{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    font-family:var(--mono);font-size:11px;color:var(--ink-faint);
+    letter-spacing:.3px;margin-bottom:18px;
+  }
+  .tag{
+    padding:4px 9px;border-radius:7px;font-weight:500;
+    background:var(--accent-soft);color:var(--accent);
+  }
+  .tag.diff{background:var(--line-soft);color:var(--ink-soft)}
+  .tag.diff[data-d="Hard"]{background:var(--trap-soft);color:var(--trap)}
+  .tag.diff[data-d="Reflex"]{background:#EAF6F0;color:var(--mastered)}
+
+  .q-title{
+    font-family:var(--display);font-weight:600;font-size:15px;
+    color:var(--ink-faint);letter-spacing:.04em;text-transform:uppercase;
+    margin:0 0 6px;
+  }
+  .prompt{
+    font-family:var(--display);font-size:26px;line-height:1.32;
+    font-weight:500;letter-spacing:-.015em;margin:0 0 4px;color:var(--ink);
+  }
+
+  .why{
+    margin:22px 0 0;padding:16px 18px;border-radius:12px;
+    background:var(--surface);border:1px solid var(--line);
+    box-shadow:var(--shadow);
+  }
+  .why .lab{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.8px;
+    text-transform:uppercase;color:var(--accent);font-weight:600;
+    margin-bottom:6px;
+  }
+  .why p{margin:0;font-size:14.5px;color:var(--ink-soft);line-height:1.6}
+
+  .scratch{margin-top:26px}
+  .scratch .lab{
+    display:flex;align-items:center;justify-content:space-between;
+    font-family:var(--mono);font-size:11px;letter-spacing:.5px;
+    text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px;
+  }
+  .scratch .lab .saved{color:var(--mastered);opacity:0;transition:opacity .3s;text-transform:none;letter-spacing:0}
+  .scratch .lab .saved.show{opacity:1}
+  textarea{
+    width:100%;min-height:110px;resize:vertical;
+    font-family:var(--body);font-size:14.5px;line-height:1.6;
+    padding:14px 16px;border-radius:12px;border:1px solid var(--line);
+    background:var(--surface);color:var(--ink);outline:none;
+  }
+  textarea:focus{border-color:var(--accent)}
+  textarea::placeholder{color:var(--ink-faint)}
+
+  .reveal-btn{
+    margin-top:18px;display:inline-flex;align-items:center;gap:9px;
+    font-family:var(--display);font-size:14px;font-weight:600;
+    background:var(--ink);color:#fff;border:none;cursor:pointer;
+    padding:11px 20px;border-radius:11px;letter-spacing:.01em;
+    transition:transform .12s,background .15s;
+  }
+  .reveal-btn:hover{background:#000}
+  .reveal-btn:active{transform:translateY(1px)}
+  .reveal-btn .kbd{
+    font-family:var(--mono);font-size:10px;background:rgba(255,255,255,.16);
+    padding:2px 6px;border-radius:5px;
+  }
+
+  .answer{display:none;margin-top:30px}
+  .answer.show{display:block;animation:rise .35s ease both}
+  @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  .sec-rule{
+    display:flex;align-items:center;gap:14px;margin:34px 0 16px;
+  }
+  .sec-rule:first-child{margin-top:0}
+  .sec-rule .lab{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:1px;
+    text-transform:uppercase;color:var(--ink-faint);white-space:nowrap;
+  }
+  .sec-rule .ln{flex:1;height:1px;background:var(--line)}
+
+  .answer h4{
+    font-family:var(--display);font-size:14.5px;font-weight:600;
+    margin:22px 0 8px;color:var(--ink);
+  }
+  .answer p{margin:0 0 13px;font-size:15px;line-height:1.68;color:#23262F}
+  .answer code{
+    font-family:var(--mono);font-size:.86em;background:var(--line-soft);
+    padding:2px 6px;border-radius:5px;color:#3A2FB0;white-space:nowrap;
+  }
+  .answer b{font-weight:600;color:var(--ink)}
+
+  .steps{counter-reset:s;margin:4px 0 14px;padding:0;list-style:none}
+  .steps li{
+    position:relative;padding:11px 14px 11px 46px;margin-bottom:7px;
+    border-radius:10px;background:var(--surface);border:1px solid var(--line);
+    font-size:14.5px;line-height:1.55;
+  }
+  .steps li::before{
+    counter-increment:s;content:counter(s);
+    position:absolute;left:13px;top:11px;
+    width:22px;height:22px;border-radius:7px;
+    background:var(--accent-soft);color:var(--accent);
+    font-family:var(--mono);font-size:11px;font-weight:600;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .steps li b{display:block;margin-bottom:1px}
+
+  .bullets{margin:0 0 14px;padding-left:0;list-style:none}
+  .bullets li{
+    position:relative;padding:3px 0 3px 22px;font-size:14.5px;
+    line-height:1.6;color:#23262F;
+  }
+  .bullets li::before{
+    content:"";position:absolute;left:4px;top:11px;
+    width:6px;height:6px;border-radius:99px;background:var(--accent);
+  }
+
+  .callout{
+    margin:4px 0 16px;padding:14px 16px 14px 18px;border-radius:11px;
+    font-size:14px;line-height:1.6;position:relative;
+    border:1px solid var(--line);background:var(--surface);
+  }
+  .callout::before{
+    content:"";position:absolute;left:0;top:10px;bottom:10px;width:4px;
+    border-radius:99px;
+  }
+  .callout.tip::before{background:var(--mastered)}
+  .callout.tip{background:var(--mastered-soft);border-color:#CFE9DD}
+  .callout.warn::before{background:var(--trap)}
+  .callout.warn{background:var(--trap-soft);border-color:#F2D2DC}
+  .callout .ct{
+    font-family:var(--mono);font-size:10px;letter-spacing:.6px;
+    text-transform:uppercase;font-weight:600;display:block;margin-bottom:4px;
+  }
+  .callout.tip .ct{color:var(--mastered)}
+  .callout.warn .ct{color:var(--trap)}
+
+  .example{
+    margin:4px 0 16px;padding:15px 17px;border-radius:11px;
+    background:#13141A;color:#E9EAF0;font-size:14px;line-height:1.65;
+  }
+  .example .ct{
+    font-family:var(--mono);font-size:10px;letter-spacing:.6px;
+    text-transform:uppercase;color:#8E93A8;display:block;margin-bottom:6px;
+  }
+  .example b{color:#fff}
+  .example code{background:rgba(255,255,255,.1);color:#C9C2FF}
+
+  /* mnemonic — the memory hook signature */
+  .hook{
+    margin:8px 0 4px;display:flex;gap:14px;align-items:stretch;
+    border-radius:13px;overflow:hidden;border:1px solid var(--line);
+    background:var(--surface);box-shadow:var(--shadow);
+  }
+  .hook .icon{
+    flex:none;width:54px;display:flex;align-items:center;justify-content:center;
+    background:var(--ink);color:#fff;font-size:22px;
+  }
+  .hook .h-body{padding:13px 16px 14px}
+  .hook .h-lab{
+    font-family:var(--mono);font-size:10px;letter-spacing:.8px;
+    text-transform:uppercase;color:var(--ink-faint);margin-bottom:4px;
+  }
+  .hook .h-text{
+    font-family:var(--mono);font-size:14.5px;font-weight:500;
+    color:var(--ink);line-height:1.5;
+  }
+
+  .takeaways{margin:0;padding:0;list-style:none}
+  .takeaways li{
+    position:relative;padding:8px 0 8px 28px;font-size:14.5px;
+    line-height:1.55;border-bottom:1px solid var(--line-soft);
+  }
+  .takeaways li:last-child{border-bottom:none}
+  .takeaways li::before{
+    content:"\2713";position:absolute;left:2px;top:8px;
+    color:var(--mastered);font-weight:700;font-size:14px;
+  }
+  .traps{margin:0;padding:0;list-style:none}
+  .traps li{
+    position:relative;padding:8px 0 8px 28px;font-size:14.5px;
+    line-height:1.55;border-bottom:1px solid var(--line-soft);color:#3A2530;
+  }
+  .traps li:last-child{border-bottom:none}
+  .traps li::before{
+    content:"\2715";position:absolute;left:3px;top:8px;
+    color:var(--trap);font-weight:700;font-size:13px;
+  }
+
+  /* status footer */
+  .statusbar{
+    position:sticky;bottom:0;margin-top:42px;
+    background:rgba(255,255,255,.86);backdrop-filter:blur(8px);
+    border:1px solid var(--line);border-radius:14px;
+    padding:13px 16px;display:flex;align-items:center;gap:10px;
+    box-shadow:var(--shadow);
+  }
+  .statusbar .lab{
+    font-family:var(--mono);font-size:11px;color:var(--ink-faint);
+    text-transform:uppercase;letter-spacing:.5px;margin-right:2px;
+  }
+  .st-btn{
+    flex:1;font-family:var(--display);font-size:13.5px;font-weight:600;
+    padding:10px 12px;border-radius:10px;cursor:pointer;
+    border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);
+    transition:all .14s;
+  }
+  .st-btn:hover{border-color:var(--ink-faint)}
+  .st-btn.on[data-v="todo"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .st-btn.on[data-v="learning"]{background:var(--learning);color:#fff;border-color:var(--learning)}
+  .st-btn.on[data-v="mastered"]{background:var(--mastered);color:#fff;border-color:var(--mastered)}
+
+  .empty{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    height:100%;color:var(--ink-faint);text-align:center;padding:40px;
+  }
+  .empty .big{font-family:var(--display);font-size:20px;color:var(--ink-soft);margin-bottom:6px}
+
+  .note-flag{
+    font-family:var(--mono);font-size:10.5px;color:var(--learning);
+    background:var(--learning-soft);padding:3px 8px;border-radius:6px;
+  }
+
+  /* mobile */
+  .mtoggle{display:none}
+  @media (max-width:860px){
+    .app{grid-template-columns:1fr;height:auto;min-height:100vh}
+    .rail{height:auto;border-right:none;border-bottom:1px solid #000;position:sticky;top:0;z-index:20}
+    .list{max-height:46vh}
+    .rail.collapsed .rail-controls,
+    .rail.collapsed .list{display:none}
+    .mtoggle{
+      display:flex;align-items:center;gap:8px;cursor:pointer;
+      font-family:var(--mono);font-size:11px;color:var(--rail-soft);
+      margin-top:14px;background:var(--rail-2);border:1px solid var(--rail-3);
+      padding:8px 11px;border-radius:8px;justify-content:center;
+    }
+    .sheet{height:auto;overflow:visible}
+    .sheet-inner{padding:26px 20px 90px}
+    .prompt{font-size:21px}
+    .statusbar{position:static}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important}
+  }
+</style>
+
+<div class="app">
+  <aside class="rail" id="rail">
+    <div class="rail-head">
+      <div class="brand">
+        <span class="mark">A/B</span>
+        <div>
+          <h1>Experiment Design Trainer</h1>
+          <span class="sub">marketplace DS · interview reps</span>
+        </div>
+      </div>
+      <div class="conf">
+        <div class="conf-top"><span>Confidence</span><span><b id="confPct">0%</b> mastered</span></div>
+        <div class="conf-bar"><div class="conf-seg m" id="segM"></div><div class="conf-seg l" id="segL"></div></div>
+        <div class="conf-legend">
+          <span><i class="dot m"></i><span id="cM">0</span> mastered</span>
+          <span><i class="dot l"></i><span id="cL">0</span> learning</span>
+          <span><i class="dot t"></i><span id="cT">0</span> to do</span>
+        </div>
+      </div>
+      <div class="mtoggle" id="mtoggle">Browse concepts ▾</div>
+    </div>
+    <div class="rail-controls">
+      <input class="search" id="search" placeholder="Search concepts, e.g. power, guardrail, p-value…" />
+      <div class="filters" id="topicFilters"></div>
+      <div class="filters" id="statusFilters" style="margin-top:8px"></div>
+    </div>
+    <div class="list" id="list"></div>
+  </aside>
+
+  <main class="sheet" id="sheet">
+    <div class="empty" id="empty">
+      <div class="big">Pick a concept to start a rep.</div>
+      <div>Each card: prompt → try it cold → reveal the model answer → mark your status.</div>
+    </div>
+  </main>
+</div>
+
+<script>
+/* ============================ CONTENT ============================ */
+const DATA = [
+  {
+    id:"checklist", num:"Q1", title:"Experiment Design",
+    topic:"Experiment Design", difficulty:"Core",
+    prompt:"Before launching an A/B test, what do you lock down — and in what order?",
+    why:"At a marketplace, leaving out guardrails or a pre-registered plan is a red flag. They're checking whether your rigour comes out as a calm checklist or as a tangle.",
+    answer:[
+      {p:"Lock six things, in writing, before anyone is bucketed:"},
+      {steps:[
+        {b:"Hypothesis",t:"Directional. e.g. cutting the delivery fee by €1 increases completed orders per user. Null: no difference; alternative: treatment > control."},
+        {b:"Primary metric",t:"Exactly one — the metric the decision hinges on, and what you powered the test on."},
+        {b:"Guardrail metrics",t:"Things that must not degrade: contribution margin per order, courier utilisation / unmet demand, cancellation rate. A fee cut can win on volume and still be a net loss."},
+        {b:"Randomisation unit & analysis unit",t:"User-level if effects are isolated; for shared supply, flag interference → geo or switchback. State that the analysis unit matches the randomisation unit."},
+        {b:"Power & sizing → minimum runtime",t:"Baseline rate, the MDE you actually care about (say 2% relative), α 5%, power 80% → required N per arm → therefore ≥1–2 full weeks regardless of how fast you hit N."},
+        {b:"Analysis plan (pre-registered)",t:"The test you'll run, outlier handling, segments, and the explicit decision rule: ship only if the primary clears its MDE AND no guardrail breaches its threshold."}
+      ]},
+      {callout:"tip|Pre-commit a sample-ratio (SRM) check on day one to catch any assignment bug before you read results."}
+    ],
+    mnemonic:"Have Pretty Good Units, Plan Ahead → Hypothesis · Primary · Guardrails · Unit · Power/Duration · Analysis plan",
+    takeaways:[
+      "Deliver it as a boring checklist you could recite half-asleep — rigour reads as calm structure.",
+      "Name guardrails before they ask. At a marketplace, omitting them unprompted is the tell.",
+      "\u201CPre-registered analysis plan\u201D is the single phrase that most separates senior from mid — it's what stops p-hacking."
+    ],
+    traps:[
+      "Hypothesis showing up last and getting knotted (\u201Cif null equals alternate…\u201D).",
+      "Implying power but never closing the loop to \u201Ctherefore N users, therefore X days.\u201D"
+    ]
+  },
+  {
+    id:"stat-vs-practical", num:"Q2", title:"Fundamentals",
+    topic:"Fundamentals", difficulty:"Core",
+    prompt:"Statistical vs practical significance — and a Bolt example where significant ≠ worth shipping.",
+    why:"Separates people who chase p < 0.05 from people who make business decisions. The example is the part they actually grade.",
+    answer:[
+      {p:"<b>Statistical significance</b> — whether the observed difference is unlikely to be due to chance, given the variance in the data. <b>Practical significance</b> — whether the magnitude of the effect is big enough to matter to the business, net of cost."},
+      {callout:"tip|The clean framing: statistical significance answers \u201Cis there an effect?\u201D; practical significance answers \u201Cis it large enough to justify acting on it?\u201D A huge sample can make a 0.1% lift significant — real, but meaningless."},
+      {h:"The Bolt example (this is what scores)"},
+      {example:"A new checkout layout lifts conversion by <b>0.15%</b> on 4M users, p < 0.01 — real, but below the threshold that justifies the eng cost, QA across 16 markets, and added maintenance. Significant, not practically significant → don't ship.\n\nThe more dangerous version: a €1 fee cut lifts orders by <b>3%</b>, significant — but contribution margin per order drops more than the volume recovers. A significant <b>win</b> on the primary, a net-negative decision. That's why you set a practical threshold (an MDE tied to cost) <b>before</b> the test."}
+    ],
+    mnemonic:"Significant = is it real. Practical = is it big enough to matter.",
+    takeaways:[
+      "Don't describe practical significance as \u201Clooking at treatment vs control without the statistics.\u201D It's about magnitude vs cost.",
+      "Always land the example. When the question says \u201Cgive me a Bolt example,\u201D the example is the answer.",
+      "Define in one breath, then immediately \u201Cfor example, at Bolt…\u201D"
+    ],
+    traps:[
+      "Defining practical significance as \u201Cnot using statistics.\u201D",
+      "Stopping at the definitions and skipping the example."
+    ]
+  },
+  {
+    id:"type1-type2", num:"Q3", title:"Fundamentals",
+    topic:"Fundamentals", difficulty:"Core",
+    prompt:"Explain Type I vs Type II error to a non-technical GM with a campaign example. Which is costlier?",
+    why:"A classic trap. It checks whether you can frame α and power as a deliberate business choice, not a fixed convention.",
+    answer:[
+      {bullets:[
+        "<b>Type I = false positive = false alarm.</b> You conclude there's an effect when there isn't → ship a \u201Cwinner\u201D that does nothing → burn budget. Rate = <code>\u03B1</code>.",
+        "<b>Type II = false negative = missed it.</b> A real effect exists but you fail to detect it → kill a genuine winner → growth left on the table. Rate = <code>\u03B2</code>, and <code>power = 1 \u2212 \u03B2</code>."
+      ]},
+      {h:"For the GM (rider discount)"},
+      {p:"A <b>Type I error</b> is a false alarm: the test says the discount works, we roll it out, we spend the budget — and it did nothing. A <b>Type II error</b> is a missed opportunity: the discount genuinely would have grown the market, but the test wasn't sensitive enough to see it, so we shelve a real winner."},
+      {h:"Which is costlier"},
+      {p:"Depends on reversibility and stakes. For a <b>high-spend, hard-to-reverse rollout</b> (budget across 50 markets), Type I is more expensive → hold a strict significance bar. For a <b>cheap, reversible experiment with large upside</b>, Type II hurts more → accept a looser bar or invest in more power."},
+      {callout:"tip|The senior move: frame \u03B1 and power as a business choice we set deliberately, based on what a mistake in each direction actually costs."}
+    ],
+    mnemonic:"One = false alarm, Two = missed it.",
+    takeaways:[
+      "Type I = false positive (\u03B1). Type II = false negative (\u03B2); power = 1 \u2212 \u03B2.",
+      "\u201CWhich is costlier\u201D is always: depends on reversibility and the cost of each mistake — never pick one blindly.",
+      "Don't equate them with precision/recall — different framing (\u03B1/\u03B2 are error rates conditional on the true state of the world)."
+    ],
+    traps:[
+      "Calling them \u201Ctrue positives vs false positives\u201D — a true positive is a correct detection, not an error.",
+      "Reaching for precision vs recall because you're an ML person."
+    ]
+  },
+  {
+    id:"power", num:"Q4", title:"Design & Power",
+    topic:"Design & Power", difficulty:"Core",
+    prompt:"What is statistical power, and what four levers move it? In a low-traffic market, how do you still run a useful test?",
+    why:"Power is where analysts reveal whether they understand why tests fail to detect real effects. Most of Bolt's 50+ markets are small, so the low-traffic half is the real test.",
+    answer:[
+      {p:"<b>Power</b> = the probability your test detects a real effect when one truly exists = <code>1 \u2212 \u03B2</code>. Plain version: \u201Cif the discount really works, what's the chance our test actually catches it?\u201D Standard target is 80%. (A Type II error is missing a real effect; power is exactly 1 minus that.)"},
+      {h:"The four levers"},
+      {steps:[
+        {b:"N — sample size",t:"More data → more power. The main lever you control."},
+        {b:"Effect size / MDE",t:"Bigger true effects are easier to detect; committing to detect only larger effects raises power."},
+        {b:"Variance of the metric",t:"Noisier metric → less power. Reduce it via CUPED, a less noisy metric, or trimming outliers."},
+        {b:"Significance level (\u03B1)",t:"A looser \u03B1 (0.10 vs 0.05) raises power — at the cost of more false positives. The one lever that trades directly against Type I."}
+      ]},
+      {h:"Low-traffic market — attack the other three"},
+      {bullets:[
+        "<b>Cut variance:</b> CUPED on pre-period behaviour (can cut required N by 20–50%), a less noisy primary metric, winsorise whale users. Variance reduction is effectively free sample size.",
+        "<b>Raise the MDE:</b> be honest — \u201Cthis market can detect a 10% lift, not a 2% one. If you need 2%, this isn't where to test it.\u201D",
+        "<b>Change the unit of analysis:</b> switchback or geo-time turns one small market into many time-block observations, recovering power.",
+        "<b>Run longer</b> to accumulate exposure; <b>pool</b> several similar small markets and analyse jointly.",
+        "<b>Declare it unpowered</b> if nothing gets you there — say what it can answer and where to run the real test."
+      ]},
+      {callout:"tip|Refusing to over-read an underpowered test is exactly the judgement they're screening for."}
+    ],
+    mnemonic:"Never Eat Vague Answers → N · Effect · Variance · Alpha",
+    takeaways:[
+      "Power = P(detect | effect is real) = 1 \u2212 \u03B2 — don't define it as MDE; MDE is one of its levers.",
+      "Four levers: N, Effect, Variance, Alpha.",
+      "Small market → CUPED, raise MDE, switchback/geo, pool markets, or honestly declare it unpowered."
+    ],
+    traps:[
+      "Defining power as \u201Chow much minimum detectable can change\u201D (that conflates power with MDE).",
+      "Forgetting Alpha is the fourth lever."
+    ]
+  },
+  {
+    id:"peeking", num:"Q5", title:"Design & Power",
+    topic:"Design & Power", difficulty:"Core",
+    prompt:"A PM says: \u201CLet's check the dashboard daily and stop the moment it hits significance.\u201D What's wrong — and two correct alternatives?",
+    why:"The single most common real-world experimentation mistake, and a daily threat with dozens of concurrent tests. Diagnosing without prescribing is a junior answer.",
+    answer:[
+      {p:"This is the <b>peeking problem</b>. Each time you look and the threshold is p < 0.05, you give the test another independent chance to cross the line by random noise. An A/A test (no real difference) wanders up and down; stop the instant it dips under 0.05 and you'll eventually catch a random dip even though nothing is happening. Your real false-positive rate isn't 5% — daily peeking over a few weeks can push it to <b>20–30%+</b>."},
+      {callout:"tip|PM version: \u201CFlip a coin enough times and you'll get five heads in a row. Peeking lets us stop on that streak and call it a win — the test stops being \u2018did it work\u2019 and becomes \u2018did we get lucky on the day we looked.\u2019\u201D"},
+      {h:"Two correct alternatives"},
+      {steps:[
+        {b:"Fixed-horizon test",t:"Pre-commit the sample size and runtime up front (power calc + minimum 1–2 weeks) and only read the result at the end. Simplest and most defensible."},
+        {b:"Sequential / always-valid inference",t:"If they genuinely need to stop early: SPRT, group-sequential boundaries (O'Brien-Fleming / Pocock), or always-valid p-values / confidence sequences (mSPRT). These spend \u03B1 across looks so the overall false-positive rate stays at 5% while you peek legitimately."}
+      ]},
+      {callout:"tip|Close by addressing the PM's underlying need: impatience → fixed-horizon. A real cost to running too long → sequential design so they can monitor safely."}
+    ],
+    mnemonic:"Repeated looks → multiplied chances for noise → real \u03B1 balloons to 20–30%.",
+    takeaways:[
+      "The mechanism is repeated looks multiplying the chances for noise to cross the threshold.",
+      "Two fixes: fixed-horizon (don't peek) or sequential / always-valid (peek legitimately by spending \u03B1).",
+      "Always end by addressing the PM's underlying need — the stakeholder-management signal."
+    ],
+    traps:[
+      "Fuzzy mechanism — it's not \u201Cinterfering in the experiment\u201D or \u201Cnot running full time.\u201D It's repeated looks.",
+      "Diagnosing the problem but offering no fix."
+    ]
+  },
+  {
+    id:"pvalue", num:"Q6", title:"Fundamentals",
+    topic:"Fundamentals", difficulty:"Core",
+    prompt:"What is a p-value actually telling you — and what is it NOT? Name two common misinterpretations.",
+    why:"Almost everyone defines it slightly wrong. Stating it precisely and naming the misreads signals you won't mislead a PM with a sloppy \u201C95% chance it's real.\u201D The \u201Cwhat it's NOT\u201D half is the whole point.",
+    answer:[
+      {p:"A p-value is the probability of observing a result <b>at least as extreme</b> as what we saw, <b>assuming the null hypothesis is true</b> (and the test's modelling assumptions hold). The conditional \u201Cgiven the null is true\u201D is everything."},
+      {h:"What it is NOT"},
+      {p:"It is <b>not</b> the probability that the null is true, and <b>not</b> the probability your result happened by chance. It's computed assuming the null — so it can't tell you the probability of the null. That's the inversion fallacy."},
+      {steps:[
+        {b:"\u201Cp = 0.03 means a 97% chance the treatment works.\u201D",t:"Wrong. That's a Bayesian quantity requiring a prior. p = 0.03 means: if there were no effect, we'd see data this extreme only 3% of the time."},
+        {b:"\u201Cp > 0.05 means there's no effect.\u201D",t:"Wrong. Failing to reject the null isn't proof of no effect — it often just means the test was underpowered. Absence of evidence isn't evidence of absence."}
+      ]},
+      {callout:"tip|Pocket third: a small p-value doesn't mean the effect is large or important — that's practical significance. Huge N gives a trivial effect a tiny p."}
+    ],
+    mnemonic:"P(data this extreme | null true) — not P(null | data).",
+    takeaways:[
+      "Definition hinges on the conditional: assuming the null is true.",
+      "Two killer misreads: \u201Cprobability the hypothesis is true\u201D (inversion fallacy) and \u201Cp > 0.05 = no effect\u201D (underpowered \u2260 null true).",
+      "Being the person who corrects the \u201C97% chance it works\u201D misread is the senior signal."
+    ],
+    traps:[
+      "Stopping at the definition and skipping the \u201Cwhat it's NOT\u201D half.",
+      "Letting a PM oversell a marginal result as \u201C95% chance it's real.\u201D"
+    ]
+  },
+  {
+    id:"one-vs-two-sided", num:"Q7", title:"Fundamentals",
+    topic:"Fundamentals", difficulty:"Core", note:"Reconstructed",
+    prompt:"One-sided vs two-sided test — when would you use each, and why are one-sided tests often discouraged?",
+    why:"Flagged in your prep but not yet drilled. It's a precision trap: the discouragement reasoning is what separates a careful answer from a textbook one.",
+    answer:[
+      {p:"<b>Two-sided</b> tests for a difference in <b>either</b> direction — the treatment could help or hurt. You split \u03B1 across both tails (2.5% each at \u03B1 = 5%). <b>One-sided</b> tests only for an effect in a <b>pre-specified direction</b>, putting all of \u03B1 in one tail — which gives more power to detect that direction."},
+      {h:"Why one-sided is often discouraged"},
+      {bullets:[
+        "You must commit to the direction <b>before</b> seeing data, and a surprise harm in the other direction goes undetected — dangerous for marketplace changes that can backfire (a fee change can quietly hurt margin or supply).",
+        "It's easily abused to manufacture significance: pick the direction after peeking and you've p-hacked."
+      ]},
+      {callout:"tip|Default to two-sided. Reserve one-sided for genuinely one-directional decisions where the opposite result wouldn't change what you do anyway."}
+    ],
+    mnemonic:"Two-sided by default; one-sided only when the other direction can't change your decision.",
+    takeaways:[
+      "Two-sided splits \u03B1 across both tails; one-sided concentrates it for more power in one direction.",
+      "One-sided requires pre-committing the direction and is blind to harm in the other.",
+      "For marketplace changes that can backfire, two-sided protects you from one-directional blindness."
+    ],
+    traps:[
+      "Using one-sided to scrape a result over the line.",
+      "Ignoring downside risk in the unmeasured direction."
+    ]
+  },
+  {
+    id:"metric-hierarchy", num:"Q8", title:"Experiment Design",
+    topic:"Experiment Design", difficulty:"Core",
+    prompt:"Define primary vs guardrail vs secondary metric. One concrete example of each for the €1-off delivery-fee test.",
+    why:"Tests whether you can structure a metric hierarchy before drowning in 30 dashboards. Guardrails are the senior tell — naming what must not break is the marketplace discipline they screen for.",
+    answer:[
+      {steps:[
+        {b:"Primary",t:"The single metric the ship/no-ship decision hinges on — what you powered the test on and pre-committed to. One, not three."},
+        {b:"Guardrail",t:"A metric that must not degrade even if the primary improves. A safety constraint that gates the decision: breach the threshold and you don't ship, regardless of the primary."},
+        {b:"Secondary",t:"Context metrics that explain the mechanism, segments, and side-effects — informative, not decisive."}
+      ]},
+      {callout:"tip|The triad in one breath: Primary decides · Guardrail protects · Secondary explains."},
+      {h:"For the €1-off fee test"},
+      {bullets:[
+        "<b>Primary:</b> completed orders per user (or order conversion rate).",
+        "<b>Guardrails:</b> contribution margin per order; courier utilisation / unmet demand; cancellation rate.",
+        "<b>Secondary:</b> basket size, new vs returning split, orders-per-restaurant, repeat rate in following weeks — these reveal whether the lift is healthy new demand vs pulled-forward orders."
+      ]},
+      {callout:"warn|The killer line: a fee cut can win on the primary and still be a bad decision — so the rule is ship only if primary clears its MDE AND no guardrail breaches."}
+    ],
+    mnemonic:"Primary decides, Guardrail protects, Secondary explains.",
+    takeaways:[
+      "Memorise the triad.",
+      "Secondary is \u201Cinformative but not decisive\u201D — not \u201Cgood to have / often absent.\u201D",
+      "For any marketplace test, name the unit-economics guardrail and the supply-side guardrail unprompted."
+    ],
+    traps:[
+      "Describing secondary metrics as \u201Cgood to have / often absent.\u201D",
+      "Giving vague, generic examples instead of concrete ones."
+    ]
+  },
+  {
+    id:"randomisation-unit", num:"Q9", title:"Marketplace & Interference",
+    topic:"Marketplace & Interference", difficulty:"Hard",
+    prompt:"Test a new rider discount. Choose the randomisation unit — rider, session, or city — and justify it. What changes with network effects?",
+    why:"The gateway to the whole marketplace-interference theme, and where switchback/causal depth should show. The reasoning order is what wins this one.",
+    answer:[
+      {h:"Lead with the interference"},
+      {p:"A rider discount doesn't only affect the treated rider — it raises their demand, which competes for the same <b>driver supply</b> control riders rely on. So treatment and control aren't independent: treating some riders changes the experience of control riders. That's interference (SUTVA violated), and it biases a naive user-level test."},
+      {h:"Walk the units"},
+      {steps:[
+        {b:"Rider-level",t:"Cleanest and highest power if effects were isolated — but here supply is shared in the same city at the same time. Avoid for anything that moves aggregate demand."},
+        {b:"City-level (geo)",t:"Assign whole cities. Contains the interference within a treated city, but power drops (tens of units, cities differ) → needs matched pairs or synthetic control."},
+        {b:"Switchback (city \u00D7 time-block)",t:"The city flips between treatment and control over hourly windows. Each city is its own control across time — absorbing fixed city differences and containing supply interference within each window. Recovers the power geo loses."}
+      ]},
+      {callout:"tip|Pick: switchback at city \u00D7 hour — unless the effect has long carryover (e.g. multi-day retention), where hour blocks are too short → go to geo/cluster with a longer horizon."},
+      {h:"What network effects change"},
+      {p:"The unit choice <b>is</b> the response. Once supply is shared, stop trusting user-level randomisation and move to a design where interference is contained inside the treatment unit. Also measure the supply side (driver utilisation, unmet demand), because the true effect is the marketplace-level effect, <b>net of supply</b>."}
+    ],
+    mnemonic:"Interference first → walk all three → pick with a condition → net of supply.",
+    takeaways:[
+      "Lead with the interference, not the unit — \u201Chere's why this is hard\u201D first, and the unit falls out.",
+      "Walk all three options briefly even though you pick one — the comparison is the signal.",
+      "Switchback's one-liner: each city is its own control across time, absorbing fixed differences and containing supply interference within each window."
+    ],
+    traps:[
+      "Jumping straight to the unit so the \u201Cwhy\u201D gets buried.",
+      "Naming \u201Cswitchback\u201D without the structured reasoning."
+    ]
+  },
+  {
+    id:"sample-size", num:"Q10", title:"Design & Power",
+    topic:"Design & Power", difficulty:"Hard", note:"Reconstructed math",
+    prompt:"Estimate sample size & runtime to detect a 2% relative lift in conversion, baseline 10%, 80% power, 5% alpha. Order of magnitude, then explain each input.",
+    why:"They want to see you ballpark feasibility out loud and reason to the right order of magnitude. The estimate plus the reasoning is the skill — not the exact formula.",
+    answer:[
+      {callout:"warn|First, the relative-vs-absolute trap: a 2% relative lift on a 10% baseline is 0.10 \u00D7 1.02 = 0.102 → absolute lift \u03B4 = 0.002 (0.2 percentage points), NOT 2pp."},
+      {h:"Back-of-envelope (per arm, 80% power, 5% two-sided)"},
+      {p:"<code>n \u2248 16 \u00D7 p(1\u2212p) / \u03B4\u00B2</code>. With p = 0.10: p(1\u2212p) = 0.09, and \u03B4\u00B2 = (0.002)\u00B2 = 4e\u22126."},
+      {p:"<code>n \u2248 16 \u00D7 0.09 / 4e\u22126 = 1.44 / 4e\u22126 \u2248 360,000 per arm</code> → ~720k total. Order of magnitude: <b>hundreds of thousands per arm</b>."},
+      {callout:"tip|The \u201C16\u201D packs (z\u2090\u2044\u2082 + z_\u03B2)\u00B2 \u2248 (1.96 + 0.84)\u00B2 \u2248 7.85, doubled for two arms \u2248 15.7 \u2248 16."},
+      {h:"Runtime"},
+      {p:"Divide N by daily eligible traffic, then enforce the minimum runtime. If a market sees ~50k eligible users/day: 720k / 50k \u2248 14 days — fine. A smaller market may be infeasible → raise the MDE or pool markets. Always apply ≥1–2 full weeks regardless of how fast you hit N."},
+      {h:"Each input"},
+      {bullets:[
+        "<b>Baseline p</b> sets the variance term p(1\u2212p).",
+        "<b>\u03B4 (absolute MDE)</b> is what you can detect — and N scales as 1/\u03B4\u00B2, so halving \u03B4 quadruples N. Small effects are brutally expensive.",
+        "<b>\u03B1</b> controls false-positive tolerance; <b>power</b> controls false-negative tolerance. Both feed the (z + z)\u00B2 constant."
+      ]}
+    ],
+    mnemonic:"n \u2248 16\u00B7p(1\u2212p)/\u03B4\u00B2 — and \u03B4 is absolute, not relative.",
+    takeaways:[
+      "Convert relative → absolute before anything else.",
+      "N \u221D 1/\u03B4\u00B2 — small effects cost enormously more.",
+      "Quote ~hundreds of thousands per arm here, then sanity-check runtime feasibility."
+    ],
+    traps:[
+      "Treating a 2% relative lift as a 2-percentage-point move.",
+      "Quoting an N without checking whether the runtime is feasible in that market."
+    ]
+  },
+  {
+    id:"min-runtime", num:"Q11", title:"Design & Power",
+    topic:"Design & Power", difficulty:"Core",
+    prompt:"Independent of sample size — what's the minimum a test should run, and why? If power says you'll hit N in two days, do you stop?",
+    why:"Catches people who think experimentation is purely a sample-size game. With strong weekly and daily rhythms in ride-hailing and food, this is a constant Bolt trap.",
+    answer:[
+      {p:"No — sample size guarantees <b>precision</b>, not <b>representativeness</b>. Three time-based reasons set a floor:"},
+      {steps:[
+        {b:"Weekly seasonality / day-of-week",t:"Behaviour differs Mon vs Sat (commute vs leisure, weekday lunch vs weekend dinner). Run at least one full week, ideally a multiple of 7 days, so every day-of-week is balanced across arms. The dominant reason."},
+        {b:"Novelty / primacy effects",t:"The first day or two is users reacting to newness, not the steady-state behaviour you'll actually live with. Run long enough for it to settle."},
+        {b:"Fast N is itself a flag",t:"Hitting N in two days usually means an unusual traffic burst (event, weekend, promo elsewhere) → your sample is skewed toward a non-representative window."}
+      ]},
+      {callout:"tip|So run a minimum of one to two full weeks and pre-commit the runtime up front — same discipline as not peeking: don't let a fast metric rush the call."},
+      {callout:"warn|CUPED is a variance-reduction tool, not a runtime reason. Keep it out of this answer."}
+    ],
+    mnemonic:"Sample size = precision; runtime = representativeness.",
+    takeaways:[
+      "Three reasons, named as a list: weekly seasonality (≥1 full week), novelty effects, fast-N skew.",
+      "Sample size = precision; runtime = representativeness — different guarantees.",
+      "Deliver as a counted list — interviewers literally check whether you named all three."
+    ],
+    traps:[
+      "Stopping early on fast N.",
+      "Citing CUPED as the reason for a minimum runtime.",
+      "Delivering it as one flowing sentence instead of a clean list."
+    ]
+  },
+  {
+    id:"slow-metric", num:"Q12", title:"Design & Power",
+    topic:"Design & Power", difficulty:"Hard",
+    prompt:"Your treatment improves long-term retention, not immediate conversion. How do you design and read a test when the metric is slow?",
+    why:"Slow-burn metrics (retention, LTV, habit formation) break the fast-effect assumption and force harder design choices. A daily reality for any growth/retention test.",
+    answer:[
+      {p:"The tension: the business wants a decision in ~2 weeks; the true metric needs 8–12. Resolve it four ways — and <b>lead</b> with the surrogate."},
+      {steps:[
+        {b:"Surrogate / proxy metric",t:"Find an early signal historically validated as predictive of the long-term outcome — e.g. ≥3 trips in the first 2 weeks → month-6 retention at rate X — and read it early. Caveat (the senior signal): a surrogate is only valid if the treatment affects the long-term metric THROUGH the surrogate."},
+        {b:"Cohort tracking",t:"Bucket users by enrolment week and track each cohort's retention curve. Read early cohorts' early weeks while later cohorts mature; separates the slow true effect from novelty."},
+        {b:"Long-term holdback",t:"Hold control out for the full measurement window; commit to stable assignment for weeks; watch for leakage (device switching, the treatment quietly rolling out)."},
+        {b:"Stage the decision",t:"An early read on guardrails + surrogate (\u201Cnothing's on fire, leading indicator positive → expand / soft-launch\u201D), then a confirmatory read on the true long-term metric later."}
+      ]},
+      {callout:"tip|This connects to your real work — S2O demand modelling and teacher/student calibration are exactly proxy-validation logic. \u201CI've done surrogate validation in pricing\u201D turns an abstract answer into evidence."}
+    ],
+    mnemonic:"Lead with the validated surrogate — and the effect must flow through it.",
+    takeaways:[
+      "Headline = a historically validated surrogate. Front-load it; attach the through-it caveat.",
+      "Supporting trio: cohort tracking, long-term holdback (watch leakage), staged decision.",
+      "Promote your strongest idea to the opening move, not a final mumble."
+    ],
+    traps:[
+      "Burying the surrogate as a quiet last sentence.",
+      "Naming a surrogate without the \u201Ceffect must flow through it\u201D caveat."
+    ]
+  },
+  {
+    id:"craft-both-halves", num:"C1", title:"Delivery Craft",
+    topic:"Delivery Craft", difficulty:"Reflex",
+    prompt:"The recurring failure mode: the definition lands, the second half goes missing.",
+    why:"This showed up three-plus times in your reps — definitions correct, the graded half skipped. Definition-only answers cap you at \u201Ccompetent\u201D when you're going for \u201Csenior.\u201D",
+    answer:[
+      {p:"When a question has two parts (\u201Cdefine X, then give a Bolt example,\u201D \u201Cwhat is it and what is it NOT\u201D), the points live in the <b>second half</b>. The definition is just setup."},
+      {callout:"tip|Build the reflex: define in one breath, then immediately pivot — \u201C…for example, at Bolt…\u201D or \u201C…and the two misreads are…\u201D. Train yourself to feel the second half coming."}
+    ],
+    mnemonic:"Define in one breath, then land the second half.",
+    takeaways:[
+      "Two-part questions are graded on part two.",
+      "Pivot to the example/contrast before the interviewer has to prompt you."
+    ],
+    traps:["Answering only the definition and stopping."]
+  },
+  {
+    id:"craft-frontload", num:"C2", title:"Delivery Craft",
+    topic:"Delivery Craft", difficulty:"Reflex",
+    prompt:"Your sharpest idea kept arriving last — and quietest.",
+    why:"In the surrogate-metric and switchback answers, the best insight came out as a final mumble. Interviewers weight what you open with.",
+    answer:[
+      {p:"Front-load your strongest point, then support it. Consciously flip the order: best idea first, scaffolding after. \u201CSurrogate metric, validated\u201D should be your opening move, not your closing whisper."},
+      {callout:"tip|Before answering a meaty question, pick your single strongest sentence and say it first."}
+    ],
+    mnemonic:"Best idea first, support after.",
+    takeaways:[
+      "Lead with the insight, not the warm-up.",
+      "If your best point is arriving last, you're sequencing backwards."
+    ],
+    traps:["Letting the strongest idea surface only at the end, half-stated."]
+  },
+  {
+    id:"craft-calm", num:"C3", title:"Delivery Craft",
+    topic:"Delivery Craft", difficulty:"Reflex",
+    prompt:"How do you signal \u201Csenior\u201D under pressure?",
+    why:"Your instincts are consistently right; the gap is precision of language under pressure. That's very fixable — it's what reps are for.",
+    answer:[
+      {p:"Deliver frameworks as a clean, almost boring checklist you could recite half-asleep. Interviewers literally count whether you named the discrete items (seasonality / novelty / representativeness). Calm structure beats knowing the pieces in a tangle."},
+      {callout:"tip|The phrases that read as senior: \u201Cpre-registered analysis plan,\u201D guardrails named unprompted, \u201Cdepends on reversibility,\u201D \u201Cnet of the supply side.\u201D Keep them ready."}
+    ],
+    mnemonic:"Rigour reads as calm structure.",
+    takeaways:[
+      "Name discrete items as a list, not one flowing sentence.",
+      "Calm, ordered structure is itself the senior signal."
+    ],
+    traps:["Streaming the right pieces in the wrong order so the thread gets lost."]
+  }
+];
+
+/* ============================ STORAGE ============================ */
+const mem = {}; // fallback if window.storage unavailable
+async function sGet(k){
+  try{ const r = await window.storage.get(k); return r ? r.value : null; }
+  catch(e){ return (k in mem) ? mem[k] : null; }
+}
+async function sSet(k,v){
+  try{ await window.storage.set(k,v); }
+  catch(e){ mem[k]=v; }
+}
+async function sDel(k){
+  try{ await window.storage.delete(k); }
+  catch(e){ delete mem[k]; }
+}
+
+/* ============================ STATE ============================ */
+const state = { status:{}, notes:{}, active:null, topic:"All", statusFilter:"All", query:"" };
+const TOPICS = ["All", ...Array.from(new Set(DATA.map(d=>d.topic)))];
+const STATUSES = [["All","All"],["To do","todo"],["Learning","learning"],["Mastered","mastered"]];
+
+async function loadState(){
+  for(const d of DATA){
+    const st = await sGet("status:"+d.id); if(st) state.status[d.id]=st;
+    const nt = await sGet("notes:"+d.id); if(nt) state.notes[d.id]=nt;
+  }
+}
+
+/* ============================ HELPERS ============================ */
+const $ = s => document.querySelector(s);
+function md(t){
+  return t
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/&lt;b&gt;/g,"<b>").replace(/&lt;\/b&gt;/g,"</b>")
+    .replace(/&lt;code&gt;/g,"<code>").replace(/&lt;\/code&gt;/g,"</code>")
+    .replace(/\n/g,"<br>");
+}
+const statusOf = id => state.status[id] || "todo";
+
+/* ============================ RENDER: CONFIDENCE ============================ */
+function renderConf(){
+  const total = DATA.length;
+  let m=0,l=0;
+  DATA.forEach(d=>{const s=statusOf(d.id); if(s==="mastered")m++; else if(s==="learning")l++;});
+  const t = total-m-l;
+  $("#segM").style.width = (m/total*100)+"%";
+  $("#segL").style.width = (l/total*100)+"%";
+  $("#confPct").textContent = Math.round(m/total*100)+"%";
+  $("#cM").textContent=m; $("#cL").textContent=l; $("#cT").textContent=t;
+}
+
+/* ============================ RENDER: FILTERS ============================ */
+function renderFilters(){
+  const tf = $("#topicFilters"); tf.innerHTML="";
+  TOPICS.forEach(t=>{
+    const c=document.createElement("div");
+    c.className="chip"+(state.topic===t?" on":"");
+    c.textContent=t;
+    c.onclick=()=>{state.topic=t; renderFilters(); renderList();};
+    tf.appendChild(c);
+  });
+  const sf=$("#statusFilters"); sf.innerHTML="";
+  STATUSES.forEach(([label,val])=>{
+    const c=document.createElement("div");
+    c.className="chip"+(state.statusFilter===val?" on":"");
+    c.textContent=label;
+    c.onclick=()=>{state.statusFilter=val; renderFilters(); renderList();};
+    sf.appendChild(c);
+  });
+}
+
+/* ============================ RENDER: LIST ============================ */
+function visibleItems(){
+  const q=state.query.trim().toLowerCase();
+  return DATA.filter(d=>{
+    if(state.topic!=="All" && d.topic!==state.topic) return false;
+    if(state.statusFilter!=="All" && statusOf(d.id)!==state.statusFilter) return false;
+    if(q){
+      const hay=(d.prompt+" "+d.topic+" "+d.title+" "+d.mnemonic+" "+d.takeaways.join(" ")).toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+function renderList(){
+  const list=$("#list"); list.innerHTML="";
+  const items=visibleItems();
+  if(!items.length){
+    list.innerHTML='<div class="grp-label" style="padding:24px 10px;color:var(--rail-soft)">No concepts match.</div>';
+    return;
+  }
+  // group by topic
+  const groups={};
+  items.forEach(d=>{(groups[d.topic]=groups[d.topic]||[]).push(d);});
+  Object.keys(groups).forEach(topic=>{
+    const gl=document.createElement("div"); gl.className="grp-label"; gl.textContent=topic;
+    list.appendChild(gl);
+    groups[topic].forEach(d=>{
+      const st=statusOf(d.id);
+      const el=document.createElement("div");
+      el.className="item"+(state.active===d.id?" active":"");
+      el.dataset.st=st; el.dataset.id=d.id;
+      const check = st==="mastered"?"\u2713":(st==="learning"?"\u25D0":"");
+      const checkColor = st==="mastered"?"var(--mastered)":(st==="learning"?"var(--learning)":"transparent");
+      el.innerHTML=`
+        <span class="spine"></span>
+        <span class="num">${d.num}</span>
+        <span class="body">
+          <span class="t">${md(d.prompt)}</span>
+          <span class="meta">${d.difficulty}${d.note?" · "+d.note:""}</span>
+        </span>
+        <span class="check" style="color:${checkColor}">${check}</span>`;
+      el.onclick=()=>openItem(d.id);
+      list.appendChild(el);
+    });
+  });
+}
+
+/* ============================ RENDER: ANSWER BLOCKS ============================ */
+function renderBlocks(blocks){
+  let html="";
+  for(const b of blocks){
+    if(b.p){ html+=`<p>${md(b.p)}</p>`; }
+    else if(b.h){ html+=`<h4>${md(b.h)}</h4>`; }
+    else if(b.steps){
+      html+="<ol class='steps'>";
+      b.steps.forEach(s=>{ html+=`<li><b>${md(s.b)}</b>${md(s.t)}</li>`; });
+      html+="</ol>";
+    }
+    else if(b.bullets){
+      html+="<ul class='bullets'>";
+      b.bullets.forEach(x=>{ html+=`<li>${md(x)}</li>`; });
+      html+="</ul>";
+    }
+    else if(b.callout){
+      const [tone,...rest]=b.callout.split("|");
+      const text=rest.join("|");
+      const label=tone==="warn"?"Watch out":"Key line";
+      html+=`<div class="callout ${tone}"><span class="ct">${label}</span>${md(text)}</div>`;
+    }
+    else if(b.example){
+      html+=`<div class="example"><span class="ct">Worked example</span>${md(b.example)}</div>`;
+    }
+  }
+  return html;
+}
+
+/* ============================ RENDER: SHEET ============================ */
+function openItem(id){
+  state.active=id;
+  renderList();
+  const d=DATA.find(x=>x.id===id);
+  const st=statusOf(id);
+  const sheet=$("#sheet");
+  const noteFlag = d.note?`<span class="note-flag">${d.note}</span>`:"";
+  sheet.innerHTML=`
+    <div class="sheet-inner">
+      <div class="crumbs">
+        <span class="tag">${d.topic}</span>
+        <span class="tag diff" data-d="${d.difficulty}">${d.difficulty}</span>
+        ${noteFlag}
+        <span>${d.num}</span>
+      </div>
+      <div class="q-title">${d.title}</div>
+      <p class="prompt">${md(d.prompt)}</p>
+
+      <div class="why">
+        <div class="lab">Why they ask</div>
+        <p>${md(d.why)}</p>
+      </div>
+
+      <div class="scratch">
+        <div class="lab"><span>Try it cold — your answer</span><span class="saved" id="savedFlag">saved</span></div>
+        <textarea id="notes" placeholder="Draft your spoken answer here before revealing the model. Saved automatically.">${(state.notes[id]||"").replace(/</g,"&lt;")}</textarea>
+      </div>
+
+      <button class="reveal-btn" id="revealBtn">Reveal model answer <span class="kbd">SPACE</span></button>
+
+      <div class="answer" id="answer">
+        <div class="sec-rule"><span class="lab">Model answer</span><span class="ln"></span></div>
+        ${renderBlocks(d.answer)}
+
+        <div class="sec-rule"><span class="lab">Memory hook</span><span class="ln"></span></div>
+        <div class="hook">
+          <div class="icon">\u2693</div>
+          <div class="h-body">
+            <div class="h-lab">Mnemonic</div>
+            <div class="h-text">${md(d.mnemonic)}</div>
+          </div>
+        </div>
+
+        <div class="sec-rule"><span class="lab">Lock these in</span><span class="ln"></span></div>
+        <ul class="takeaways">${d.takeaways.map(t=>`<li>${md(t)}</li>`).join("")}</ul>
+
+        <div class="sec-rule"><span class="lab">Traps you've hit</span><span class="ln"></span></div>
+        <ul class="traps">${d.traps.map(t=>`<li>${md(t)}</li>`).join("")}</ul>
+      </div>
+
+      <div class="statusbar">
+        <span class="lab">Status</span>
+        <button class="st-btn ${st==="todo"?"on":""}" data-v="todo">To do</button>
+        <button class="st-btn ${st==="learning"?"on":""}" data-v="learning">Learning</button>
+        <button class="st-btn ${st==="mastered"?"on":""}" data-v="mastered">Mastered</button>
+      </div>
+    </div>`;
+
+  // reveal
+  const ans=$("#answer"), rb=$("#revealBtn");
+  rb.onclick=()=>{ ans.classList.add("show"); rb.style.display="none"; };
+
+  // notes autosave
+  const ta=$("#notes"), flag=$("#savedFlag");
+  let timer=null;
+  ta.addEventListener("input",()=>{
+    state.notes[id]=ta.value;
+    clearTimeout(timer);
+    timer=setTimeout(async()=>{
+      await sSet("notes:"+id, ta.value);
+      flag.classList.add("show");
+      setTimeout(()=>flag.classList.remove("show"),1200);
+    },400);
+  });
+
+  // status buttons
+  sheet.querySelectorAll(".st-btn").forEach(btn=>{
+    btn.onclick=async()=>{
+      const v=btn.dataset.v;
+      state.status[id]=v;
+      if(v==="todo") await sDel("status:"+id); else await sSet("status:"+id,v);
+      sheet.querySelectorAll(".st-btn").forEach(b=>b.classList.toggle("on",b.dataset.v===v));
+      renderConf(); renderList();
+    };
+  });
+
+  // collapse mobile rail after pick
+  if(window.innerWidth<=860){ $("#rail").classList.add("collapsed"); $("#mtoggle").textContent="Browse concepts \u25BE"; }
+  sheet.scrollTop=0;
+}
+
+/* ============================ KEYBOARD ============================ */
+document.addEventListener("keydown",(e)=>{
+  if(e.target.tagName==="TEXTAREA"||e.target.tagName==="INPUT") return;
+  const items=visibleItems();
+  if(!items.length) return;
+  const idx=items.findIndex(d=>d.id===state.active);
+  if(e.key==="ArrowDown"||e.key==="j"){ e.preventDefault(); openItem(items[Math.min(items.length-1,idx+1<0?0:idx+1)].id); }
+  else if(e.key==="ArrowUp"||e.key==="k"){ e.preventDefault(); openItem(items[Math.max(0,idx-1)].id); }
+  else if(e.key===" "){ const rb=$("#revealBtn"); if(rb&&rb.style.display!=="none"){ e.preventDefault(); rb.click(); } }
+});
+
+/* ============================ WIRE-UP ============================ */
+$("#search").addEventListener("input",e=>{ state.query=e.target.value; renderList(); });
+$("#mtoggle").addEventListener("click",()=>{
+  const r=$("#rail"); r.classList.toggle("collapsed");
+  $("#mtoggle").textContent = r.classList.contains("collapsed") ? "Browse concepts \u25BE" : "Hide concepts \u25B4";
+});
+
+(async function init(){
+  await loadState();
+  renderConf(); renderFilters(); renderList();
+})();
+</script>
