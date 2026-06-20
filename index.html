@@ -792,6 +792,212 @@ const DATA = [
     ]
   },
   {
+    id:"mde", num:"Q13", title:"Design & Power",
+    topic:"Design & Power", difficulty:"Hard",
+    prompt:"How do you set the MDE — the minimum detectable effect? Balance \u201Cthe smallest effect worth detecting\u201D against what's actually feasible.",
+    why:"MDE is where business judgement and statistics collide. Seniors derive it from business value and then negotiate it against feasibility, rather than treating it as a number they're handed.",
+    answer:[
+      {p:"Setting the MDE is a two-sided negotiation between a floor and a ceiling — and the floor is the half that earns the score."},
+      {steps:[
+        {b:"Floor — business value (bottom-up)",t:"Back into it from economics: what's the smallest effect that makes the change worth shipping, accounting for its cost? For a €1 fee cut: the break-even order-volume lift that recovers the margin cost. Below that, you wouldn't ship anyway, so there's no point powering for it. The MDE floor = the effect size where the decision flips from no-ship to ship."},
+        {b:"Ceiling — feasibility (top-down)",t:"Given the market's traffic and an acceptable runtime, what's the largest MDE you're forced to accept? Small markets can only detect big effects (Q4/Q10)."},
+        {b:"Resolve",t:"If the business floor is below the feasibility ceiling, power to the floor — you'll catch everything that matters. If the floor is above the ceiling, the test genuinely can't answer the question."}
+      ]},
+      {callout:"warn|If floor > ceiling, say so explicitly and change the design — bigger market, pool markets, CUPED, run longer. Never quietly inflate the MDE to make the test 'work' and then read a null result as 'no effect.'"}
+    ],
+    mnemonic:"MDE floor = the effect size where the decision flips from no-ship to ship.",
+    takeaways:[
+      "Two anchors: business floor (break-even economics) and feasibility ceiling (traffic-driven). Most people only give the ceiling — front-load the floor.",
+      "When floor and ceiling can't be reconciled, say the test can't answer it rather than faking feasibility.",
+      "Whenever a stats question has a \u201Cis it worth it / how much\u201D flavour, start from the money, then bring in the statistics."
+    ],
+    traps:[
+      "Only discussing the statistical/feasibility side and never deriving the business-value floor.",
+      "Inflating the MDE to manufacture a feasible-looking test, then over-reading a null result."
+    ]
+  },
+  {
+    id:"market-selection", num:"Q14", title:"Marketplace & Interference",
+    topic:"Marketplace & Interference", difficulty:"Hard",
+    prompt:"You can only test in 3 of 30 markets. How do you choose them so results generalise — and what threatens external validity?",
+    why:"A pure Bolt problem: you can't test everywhere, so you test somewhere and extrapolate. The trap is picking the easiest (biggest) markets, which are often the least representative.",
+    answer:[
+      {h:"How to choose the 3"},
+      {steps:[
+        {b:"Representativeness, not size",t:"The biggest markets give the most data but are often the least typical (mature, dense, atypical competition). Pick markets whose characteristics — maturity, supply-demand balance, price sensitivity, competitive intensity — span the range of the other 27."},
+        {b:"Sufficient power",t:"Each chosen market must individually supply enough events to read the test. Tension with #1: the most representative market might be too small — balance the two."},
+        {b:"Stratified / matched selection",t:"Segment the 30 markets into clusters (mature/dense, growth/mid, emerging/sparse) and pick markets representing the clusters you most need to generalise to — then extrapolate cluster by cluster instead of averaging."},
+        {b:"Risk containment + clean read",t:"Avoid risky pricing tests in top revenue markets (downside too large); avoid markets with confounding events (competitor war, local promo, regulatory change)."}
+      ]},
+      {h:"Threats to external validity (give this equal weight)"},
+      {bullets:[
+        "<b>Heterogeneous treatment effects</b> — the headline threat. The effect genuinely differs by market type; a discount that works in price-sensitive emerging markets may do nothing in wealthy mature ones. The effect is a distribution, not one number.",
+        "<b>Selection bias</b> — if you picked the easiest/biggest markets, your estimate is biased toward how those behave.",
+        "<b>Few-units inference</b> — with only 3 markets you can barely estimate between-market variance, so confidence in extrapolation is weak.",
+        "<b>Interaction with local conditions</b> — competitive intensity, regulation, supply elasticity, seasonality differ.",
+        "<b>Scale/equilibrium effects</b> — a result at 3-market scale may not hold at 30-market rollout (network effects, supply reallocation)."
+      ]},
+      {callout:"tip|Close with the operator move: extrapolate cluster by cluster (not one global effect), and de-risk with a phased rollout that keeps some markets as a staggered holdout to validate generalisation as you expand."}
+    ],
+    mnemonic:"Representativeness > size. The effect is a distribution across market types, not one number.",
+    takeaways:[
+      "Stratify into clusters, pick representatives, balance against power and risk — don't just pick the 3 biggest.",
+      "Headline external-validity threat: heterogeneous treatment effects.",
+      "Close with cluster-by-cluster extrapolation + phased rollout with staggered holdouts."
+    ],
+    traps:[
+      "Picking the 3 biggest markets because they're easiest to power.",
+      "Giving external validity two vague sentences when it deserves equal weight to the selection criteria."
+    ]
+  },
+  {
+    id:"sutva-interference", num:"Q15", title:"Marketplace & Interference",
+    topic:"Marketplace & Interference", difficulty:"Hard", note:"Signature strength",
+    prompt:"Why do standard user-level A/B tests break in a two-sided marketplace? Give a concrete interference example and name the mechanism.",
+    why:"The conceptual foundation under switchbacks, geo tests, everything in the marketplace section. They want the mechanism named precisely — not just \u201Cbecause everything's connected.\u201D",
+    answer:[
+      {p:"<b>SUTVA = Stable Unit Treatment Value Assumption.</b> The specific clause that breaks: <i>no unit's treatment affects another unit's outcome.</i> In a two-sided marketplace, riders and drivers aren't independent — they share supply."},
+      {h:"One causal chain (land it, then stop)"},
+      {p:"Discount treated riders → their demand rises → they consume more of the shared driver pool → control riders (sharing that same pool, same city, same time) get fewer available drivers, longer waits, higher surge → <b>the treatment has actively degraded the control group</b>, not just left it alone. Control is no longer a clean counterfactual."},
+      {callout:"warn|State the direction of the bias explicitly: interference usually OVERSTATES the effect, because treatment depresses control rather than control staying neutral. Knowing the direction is the senior tell — most people stop at \u201Cthere's bias.\u201D"},
+      {h:"The fix"},
+      {p:"Stop randomising at the user level; contain the interference inside the unit. For something demand-side and short-acting, use a <b>switchback</b> — city \u00D7 time-block (hourly, since most rides finish inside an hour, limiting carryover). Each city becomes its own control across time, absorbing fixed differences and keeping supply effects inside the window."}
+    ],
+    mnemonic:"Treatment doesn't just lift itself — it depresses control. That's why the bias overstates the effect.",
+    takeaways:[
+      "Say the acronym and clause precisely: SUTVA — no unit's treatment affects another unit's outcome.",
+      "State the bias direction: interference typically overstates the effect.",
+      "One example, landed cleanly, beats reaching for a second (e.g. competitor) example and trailing off."
+    ],
+    traps:[
+      "Vague mechanism — \u201Cbecause everything's connected\u201D instead of the specific causal chain.",
+      "Not stating which direction the bias runs."
+    ]
+  },
+  {
+    id:"switchback-deep", num:"Q16", title:"Marketplace & Interference",
+    topic:"Marketplace & Interference", difficulty:"Hard", note:"Signature strength",
+    prompt:"Explain switchback experiments in depth: what they are, when to use them, the block-length trade-off, carryover/burn-in, and how you'd analyse one.",
+    why:"This is where a panel finds out whether you've actually run switchbacks or just read about them. Depth markers: autocorrelation, burn-in, and the bias-variance trade-off in block length.",
+    answer:[
+      {p:"Lead with a tight definition, then go deep in order — don't loop back and add pieces."},
+      {steps:[
+        {b:"What",t:"Unit of randomisation is time (or region \u00D7 time). The system flips between treatment and control across blocks; each region is its own control across time."},
+        {b:"When",t:"Interference makes user-level invalid AND the effect is short-lived enough to flip on this cadence — pricing, surge, supply-side changes, matching algorithms."},
+        {b:"Switch-length trade-off",t:"<b>Short blocks (e.g. 5 min):</b> many time units → more power / lower variance, BUT carryover worsens — a trip starting in treatment finishes in the next control block, leaking treatment into control. <b>Long blocks (e.g. 4 hr):</b> carryover is negligible relative to block length → less bias, BUT few units → less power, and each block spans different demand conditions. The axis is carryover-bias vs power-variance, not 'overfit/underfit' — anchor block length to activity duration (~1hr rides, ~20min quick-commerce)."},
+        {b:"Carryover / burn-in",t:"Use a burn-in: discard the first few minutes of each block — the trips that span the switch — and measure only the steady-state portion. Burn-in length is set by how long carryover lasts."},
+        {b:"Randomisation",t:"Randomise the treatment sequence and balance time-of-day/day-of-week so treatment isn't confounded with 'always the 9am slot.'"},
+        {b:"Analysis / inference",t:"Point estimate = diff in metric across blocks. BUT consecutive blocks are temporally autocorrelated (9am demand \u2248 10am demand) — naive i.i.d. standard errors are too small → overstated significance. Correct with HAC/Newey-West or clustered SEs, or randomisation/Fisher inference (re-randomise the switch sequence to build the null empirically)."}
+      ]},
+      {callout:"warn|Don't use ML vocabulary (\u201Coverfit/underfit\u201D) for the block-length trade-off — the correct terms are carryover-bias vs power-variance."}
+    ],
+    mnemonic:"Short blocks: more power, more carryover. Long blocks: less carryover, less power. Anchor to activity duration.",
+    takeaways:[
+      "Correct trade-off direction: short = more power but more carryover bias; long = less bias but less power.",
+      "Autocorrelation is the headline depth marker the interviewer is listening for — make it the centerpiece of the analysis section.",
+      "Burn-in = explicit technique to discard boundary-contaminated trips."
+    ],
+    traps:[
+      "Flipping the bias-variance direction on block length.",
+      "Naming carryover but never naming the fix (burn-in) or the autocorrelation correction (HAC/clustered SEs)."
+    ]
+  },
+  {
+    id:"carryover-autocorr", num:"Q17", title:"Marketplace & Interference",
+    topic:"Marketplace & Interference", difficulty:"Hard",
+    prompt:"In switchback analysis specifically — how do you handle carryover and autocorrelation? They sound similar; are they the same fix?",
+    why:"The natural deepening of Q16. Tests whether you actually separate two distinct problems instead of waving at 'temporal stuff' generically.",
+    answer:[
+      {callout:"tip|Open with the frame: \u201CThese are two distinct problems. Carryover biases the point estimate; autocorrelation biases the standard error. I handle them separately.\u201D"},
+      {h:"Carryover — corrupts the point estimate"},
+      {p:"Activity starting under one treatment but finishing under the next block 'leaks' treatment into control — usually <b>attenuating</b> the estimate (pulling it toward zero)."},
+      {bullets:[
+        "<b>Burn-in/washout:</b> discard the first few minutes of each block — the period still resolving prior-block activity.",
+        "<b>Block length relative to carryover:</b> choose blocks long enough that boundary contamination is a small fraction of the block.",
+        "<b>Consistent attribution rule:</b> decide up front whether a trip belongs to its start block or completion block, and apply it consistently."
+      ]},
+      {h:"Autocorrelation — corrupts the standard error"},
+      {p:"Consecutive blocks are correlated (9am \u2248 10am), so they're not independent observations. A naive SE assumes i.i.d. blocks → undercounts the true variance → SE too small → CIs too narrow → inflated false-positive rate. The point estimate is fine; the uncertainty is understated."},
+      {bullets:[
+        "<b>HAC / Newey-West SEs:</b> explicitly model serial correlation and inflate the SE accordingly.",
+        "<b>Cluster-robust SEs:</b> cluster by day or region to absorb within-cluster dependence.",
+        "<b>Randomisation / Fisher inference:</b> re-randomise the treatment sequence to build the null distribution empirically — sidesteps parametric SE assumptions, often the most defensible choice."
+      ]},
+      {callout:"warn|They interact through block length: shorter blocks reduce carryover bias less and add more units — but because those units are autocorrelated, each adds less than a full block of independent information, so the power gain from short blocks is partly illusory."}
+    ],
+    mnemonic:"Carryover → estimate (bias). Autocorrelation → standard error (false positives).",
+    takeaways:[
+      "Two separate problems with two separate fixes — lead with that distinction.",
+      "Carryover fix = burn-in + consistent attribution. Autocorrelation fix = HAC/clustered SEs or randomisation inference.",
+      "They couple through block length — that's why you don't push blocks arbitrarily short."
+    ],
+    traps:[
+      "Treating carryover and autocorrelation as the same problem with the same fix.",
+      "Naming HAC/clustered SEs as a carryover fix (it's an autocorrelation fix)."
+    ]
+  },
+  {
+    id:"math-autocorr-se", num:"M1", title:"Math Foundations",
+    topic:"Math Foundations", difficulty:"Hard", note:"Mechanism derivation",
+    prompt:"Mechanically — why does positive autocorrelation make the naive standard error too small?",
+    why:"\u201CAutocorrelation inflates your SE\u201D is something people repeat without being able to defend. Deriving it from the variance-of-a-sum formula is what separates someone who's actually run switchbacks from someone who's memorised the term.",
+    answer:[
+      {p:"Treat your estimate as an average over n time blocks: <code>estimate = (1/n)\u00B7\u03A3X\u1D62</code>. The variance of that average is <code>Var(mean) = (1/n\u00B2)\u00B7Var(\u03A3X\u1D62)</code>, and the crux is how <code>Var(\u03A3X\u1D62)</code> expands:"},
+      {example:"Var(\u03A3X\u1D62) = \u03A3Var(X\u1D62) + \u03A3\u03A3Cov(X\u1D62,X\u2C7C)  for i\u2260j\n\n<b>i.i.d. case (what naive SE assumes):</b> every Cov term = 0, so Var(\u03A3X\u1D62) = n\u00B7\u03C3\u00B2 → SE = \u03C3/\u221An. That's the textbook formula — but it's only correct because every covariance was assumed zero.\n\n<b>Autocorrelated case (what's actually true):</b> consecutive blocks are positively correlated, so Cov(X\u1D62,X\u2C7C) > 0 for nearby blocks. The true variance is n\u00B7\u03C3\u00B2 PLUS those positive terms — bigger than the naive formula assumes. But the naive formula still divides as if they were zero, so it reports an SE that's systematically too small."},
+      {h:"The intuitive version to say in the room"},
+      {p:"\u201CIf 9am and 10am demand are nearly the same, my second block barely tells me anything new — it's largely a repeat of the first. So 24 hourly blocks aren't 24 independent data points; the effective sample size is smaller, maybe 8\u201310 truly independent observations. The naive SE uses \u221A24; the honest SE should use \u221A(effective n), which is smaller — so the SE has to be larger.\u201D"},
+      {h:"Why it's dangerous"},
+      {p:"Smaller SE → bigger test statistic (\u03B4/SE) → smaller p-value → narrower CI → you declare significance more often than you're entitled to. Your nominal 5% false-positive rate is actually much higher — you ship pricing changes that did nothing."},
+      {h:"What the fixes actually do"},
+      {bullets:[
+        "<b>HAC / Newey-West:</b> explicitly estimates the non-zero covariance terms and adds them back into the variance — directly repairing the formula.",
+        "<b>Cluster-robust (by day/region):</b> lets observations correlate freely within a cluster, only assuming independence between clusters.",
+        "<b>Randomisation inference:</b> skips the formula entirely — re-randomises the sequence to build the null empirically, so autocorrelation is automatically reflected."
+      ]}
+    ],
+    mnemonic:"Positive autocorrelation → positive covariance terms the naive formula drops → true variance bigger → naive SE too small.",
+    takeaways:[
+      "The naive σ/√n formula silently assumes every cross-covariance term is zero.",
+      "Effective sample size framing is the cleanest one-liner: correlated blocks carry less new information, so n_eff < raw block count.",
+      "All three fixes amount to 'stop pretending the off-diagonal covariances are zero.'"
+    ],
+    traps:[
+      "Asserting autocorrelation inflates the SE without being able to derive why.",
+      "Confusing this with the carryover problem (Q17) — this is purely about the SE, not the point estimate."
+    ]
+  },
+  {
+    id:"math-low-traffic-power", num:"M2", title:"Math Foundations",
+    topic:"Math Foundations", difficulty:"Hard", note:"Unifies Q4/Q10/Q13",
+    prompt:"Mathematically, why do CUPED, raising the MDE, switchbacks, running longer, and pooling markets all 'recover power' in a low-traffic market?",
+    why:"The tactics in Q4 can sound like a grab-bag of tricks. The senior move is recognising they're all the same equation, attacking different terms — and being able to say so in one sentence.",
+    answer:[
+      {p:"Power is driven by the signal-to-noise ratio. For a difference in means: <code>SE = \u03C3\u00B7\u221A(2/n_eff)</code>, so <code>\u03B4/SE = (\u03B4/\u03C3)\u00B7\u221A(n_eff/2)</code>. There are exactly three knobs: effect <code>\u03B4</code> (numerator), noise <code>\u03C3</code> (denominator), and effective sample size <code>n_eff</code>. A low-traffic market is short on raw n — so every lever attacks \u03C3, \u03B4, or n_eff some other way."},
+      {h:"Each lever, mapped to a term"},
+      {steps:[
+        {b:"CUPED → shrinks \u03C3",t:"Var(Y_adjusted) = Var(Y)\u00B7(1\u2212\u03C1\u00B2) where \u03C1 is the pre-period\u2013outcome correlation. Since required n \u221D \u03C3\u00B2, a 50% variance cut (\u03C1\u22480.7) needs ~50% fewer users. \u03C3\u00B2 and n are interchangeable for power — cutting \u03C3\u00B2 in half IS doubling n."},
+        {b:"Raise the MDE → increases \u03B4",t:"Required n \u221D \u03C3\u00B2/\u03B4\u00B2 — \u03B4 is SQUARED. Detecting 10% instead of 2% (5\u00D7 larger \u03B4) cuts required n by 25\u00D7 (5\u00B2). That's why a market's fixed n pins down the smallest \u03B4 it can resolve."},
+        {b:"Switchback/geo-time → manufactures n_eff",t:"Swaps a population-limited n for a time-limited n (a small city run for 4 weeks at hourly blocks \u2248 672 time blocks). Caveat: those blocks are autocorrelated (M1), so n_eff < raw block count — but even discounted, usually still dwarfs user-level n."},
+        {b:"Run longer → grows n, but SE falls only as \u221An",t:"Diminishing returns: halving the SE requires 4\u00D7 the data/time, not 2\u00D7."},
+        {b:"Pool markets → adds independent n",t:"SE_pooled = \u03C3\u00B7\u221A(2/\u03A3n\u2096) — only valid if the treatment effect is genuinely homogeneous across the pooled markets (else you're averaging heterogeneous effects, the Q14 problem). Test for heterogeneity before trusting the pooled number."}
+      ]},
+      {h:"When the equation refuses to cooperate"},
+      {p:"Plug the market's max achievable n, irreducible \u03C3 (post-CUPED), and the business-required \u03B4 into <code>Power = \u03A6((\u03B4/\u03C3)\u00B7\u221A(n_eff/2) \u2212 z)</code>. If it evaluates to, say, 35% even after every lever is maxed, you have a 65% chance of missing a real effect — a null result tells you almost nothing. Reporting the achieved power is a quantified, defensible reason not to run it, not a vibe."},
+      {callout:"tip|The one inequality underneath everything: \u03B4_business \u2265 \u03B4_min = c\u00B7\u03C3/\u221An_eff (c \u2248 2.8 for 80% power, 5% \u03B1). You either shrink \u03C3, raise n_eff, accept a larger \u03B4_business, or admit it's unsolvable here."}
+    ],
+    mnemonic:"Required n \u221D \u03C3\u00B2/\u03B4\u00B2 — every power lever is attacking \u03C3, \u03B4, or n_eff in that one equation.",
+    takeaways:[
+      "δ is squared in the n formula — small MDEs are brutally expensive, large ones cheap.",
+      "CUPED's variance cut and a sample-size increase are mathematically interchangeable for power.",
+      "Pooling only works under homogeneity — check before trusting it (ties back to Q14).",
+      "Room-ready sentence: 'Required n scales as σ²/δ², so I attack σ (CUPED), δ (raise the MDE), or manufacture n_eff (switchback/pooling) — and if δ_business is still below δ_min, I report achieved power and don't run it.'"
+    ],
+    traps:[
+      "Listing the tactics as a grab-bag instead of recognising they're one equation.",
+      "Pooling markets without checking for treatment-effect heterogeneity."
+    ]
+  },
+  {
     id:"craft-both-halves", num:"C1", title:"Delivery Craft",
     topic:"Delivery Craft", difficulty:"Reflex",
     prompt:"The recurring failure mode: the definition lands, the second half goes missing.",
@@ -838,6 +1044,22 @@ const DATA = [
       "Calm, ordered structure is itself the senior signal."
     ],
     traps:["Streaming the right pieces in the wrong order so the thread gets lost."]
+  },
+  {
+    id:"craft-business-first", num:"C4", title:"Delivery Craft",
+    topic:"Delivery Craft", difficulty:"Reflex", note:"New pattern",
+    prompt:"You're consistently strong on statistical mechanics and consistently light on the business-value derivation.",
+    why:"The through-line across Q2, Q8, and Q13: you nail the stats half and skip deriving the dollar threshold. For a senior/growth-leaning role, the business-value half is what's actually being hired for.",
+    answer:[
+      {p:"Whenever a question has an \u201Cis it worth it / how much / what threshold\u201D flavour, start from the money, then bring in the statistics. Don't let the statistical mechanics — which you already have cold — crowd out the derivation of why a number matters to the business."},
+      {callout:"tip|Habit to build: before answering, ask yourself 'what's the break-even number here?' and say that first. The stats answer how to detect it; the business answer decides whether it's worth detecting."}
+    ],
+    mnemonic:"Start from the money, then bring in the statistics.",
+    takeaways:[
+      "Stats mechanics are not in question anymore — the business-value derivation is the differentiator left to drill.",
+      "MDE floors, guardrail thresholds, and practical-significance cutoffs all come from this same habit."
+    ],
+    traps:["Defaulting straight to formulas and skipping the 'why does this number matter' framing."]
   }
 ];
 
