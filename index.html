@@ -1060,6 +1060,210 @@ const DATA = [
       "MDE floors, guardrail thresholds, and practical-significance cutoffs all come from this same habit."
     ],
     traps:["Defaulting straight to formulas and skipping the 'why does this number matter' framing."]
+  },
+  {
+    id:"gs-automation-mapping", num:"GS1", title:"Growth Strategy Analyst",
+    topic:"Growth Strategy Analyst", difficulty:"Core", note:"Role-specific",
+    prompt:"How would you map Bolt's current automation coverage for incentives management and prioritise which gaps to close first?",
+    why:"This is the first deliverable in the role — before building anything you need a shared picture of what's manual, what's automated, and what's worth fixing first. They're testing whether you reach for a structured framework instead of just listing tools you'd like to build.",
+    answer:[
+      {h:"Step 1 — Inventory the workflow, not the tool"},
+      {p:"Map the incentive lifecycle end to end, by stage: targeting/eligibility, budget allocation, spend monitoring, anomaly detection, reporting, post-campaign analysis. For each stage, tag it <b>manual / semi-automated / fully automated</b> and who owns it (Growth Analyst, Engineering, Data Science)."},
+      {h:"Step 2 — Score gaps by impact, not noise"},
+      {bullets:[
+        "<b>Frequency \u00D7 time:</b> how often this manual step runs, multiplied by analyst-hours per run, gives you the raw load.",
+        "<b>Error/risk cost:</b> a manual step that mis-targets incentive spend across 50 markets costs more than a one-off report tweak.",
+        "<b>Reach:</b> how many markets/analysts touch this workflow — fixing a widely-shared bottleneck compounds."
+      ]},
+      {p:"Roughly: <code>Impact \u2248 frequency \u00D7 analyst-hours \u00D7 markets affected</code>. Rank, don't eyeball."},
+      {h:"Step 3 — Separate what's automatable now from what's automatable later"},
+      {bullets:[
+        "<b>Rule-based, deterministic steps</b> — fully automatable with scripting/orchestration today.",
+        "<b>Judgment-heavy steps</b> — good candidates for an LLM-diagnostic layer with a human-in-the-loop checkpoint.",
+        "<b>Genuinely ambiguous strategic calls</b> — keep manual, at least for now."
+      ]},
+      {callout:"tip|Come back with a ranked, quantified backlog: workflow → hours/week saved → markets affected → automation complexity (low/med/high). Start with high-impact, low-complexity wins first — they build trust before you tackle the harder LLM-diagnostic work."}
+    ],
+    mnemonic:"Map the workflow, not the tool. Score impact = frequency \u00D7 hours \u00D7 reach.",
+    takeaways:[
+      "Inventory by workflow stage and ownership before reaching for any specific tool.",
+      "Impact scoring should be quantified (frequency \u00D7 analyst-hours \u00D7 markets), not vibes.",
+      "Start with high-impact/low-complexity wins to build adoption trust before tackling ambiguous, judgment-heavy steps."
+    ],
+    traps:[
+      "Jumping straight to \u201Cwe should use an LLM for X\u201D before mapping the baseline.",
+      "Prioritising by what's technically interesting rather than by analyst-hours actually saved."
+    ]
+  },
+  {
+    id:"gs-llm-pipeline", num:"GS2", title:"Growth Strategy Analyst",
+    topic:"Growth Strategy Analyst", difficulty:"Hard", note:"Role-specific",
+    prompt:"Design an LLM-powered diagnostic pipeline that flags anomalous incentive spend across markets. What's the architecture, and how do you handle the risk of the LLM being wrong?",
+    why:"This is the core technical deliverable of the role — \u201Cbuild and maintain AI and automation workflows, including LLM-powered diagnostics.\u201D They want to see you reason about LLM workflows as engineering systems with guardrails, not \u201Ccall the API and trust the output.\u201D",
+    answer:[
+      {h:"Architecture (the boring, reliable shape)"},
+      {steps:[
+        {b:"Deterministic detection layer first",t:"A statistical/rule-based anomaly detector (e.g. z-score on spend-per-acquisition vs trailing baseline, control charts) does the actual flagging. This is auditable and doesn't hallucinate."},
+        {b:"LLM as the diagnostic/explanation layer, not the detector",t:"Once the stat layer flags an anomaly, the LLM is fed structured context (campaign config, market, recent changes, relevant metrics) and asked to draft a plausible explanation and next-step recommendation — it explains, it doesn't decide."},
+        {b:"Human-in-the-loop confirmation",t:"For anything above a spend/risk threshold before any action is taken automatically."},
+        {b:"Reporting pipeline",t:"Templated, scheduled summaries of flagged + explained anomalies to analysts, with links back to the underlying data for verification."}
+      ]},
+      {h:"Handling hallucination / trust risk"},
+      {bullets:[
+        "Ground every LLM output in retrieved structured data, never open-ended generation — the LLM should cite the actual numbers it was given, not invent figures.",
+        "Treat the LLM's explanation as a <b>hypothesis to verify</b>, not a finding — keep the human-in-the-loop checkpoint for any market-impacting decision.",
+        "Log and periodically audit LLM outputs against analyst corrections, and track an agreement/accuracy rate over time — same instinct as offline-validating a surrogate metric.",
+        "Set a clear boundary on what's fully automated (alerting, drafting summaries) vs what stays human-approved (cutting budget, pausing a market)."
+      ]},
+      {callout:"warn|Don't let the LLM both detect and act — that's where silent, compounding errors happen at scale across 50+ markets."}
+    ],
+    mnemonic:"Detect deterministically, explain with the LLM, decide with a human — until trust is earned.",
+    takeaways:[
+      "Separate detection (statistical, auditable) from diagnosis (LLM, explanatory) from action (human-approved, at least initially).",
+      "Ground LLM outputs in real fetched data; treat outputs as hypotheses, not facts.",
+      "Track agreement rate vs analyst corrections over time before expanding the LLM's autonomy."
+    ],
+    traps:[
+      "Using the LLM as the anomaly detector itself.",
+      "No human checkpoint before consequential spend decisions."
+    ]
+  },
+  {
+    id:"gs-adoption", num:"GS3", title:"Growth Strategy Analyst",
+    topic:"Growth Strategy Analyst", difficulty:"Core", note:"Role-specific",
+    prompt:"You shipped an automation tool that should save Growth Analysts hours each week, but adoption is low six weeks in. How do you diagnose and fix it?",
+    why:"\u201COwn rollout and adoption... training, documentation, and ongoing support\u201D is explicit in the JD. Building the tool is half the job; they want to see you treat adoption as a measurable, diagnosable problem, not a training problem you wave at.",
+    answer:[
+      {h:"Diagnose before prescribing"},
+      {bullets:[
+        "<b>Trust gap:</b> do analysts believe the output? If it's been wrong even once publicly, trust collapses fast.",
+        "<b>Workflow fit:</b> does it slot into how they actually work, or does it require an extra context-switch?",
+        "<b>Awareness/usability:</b> do they know it exists and is it discoverable, or did you ship it and move on?",
+        "<b>Incentive misalignment:</b> is there any reason NOT to use it — e.g. it changes how their work gets reviewed?"
+      ]},
+      {p:"I'd pull usage logs first — is it zero usage, tried-once-and-dropped, or used-but-not-trusted (used, then manually double-checked anyway)? Each pattern points to a different fix."},
+      {h:"Fix by pattern"},
+      {steps:[
+        {b:"Tried-once-and-dropped",t:"Usually a workflow-fit or trust problem. Sit with 2–3 analysts, watch them use it live, find the friction."},
+        {b:"Zero usage",t:"Awareness/discoverability problem. Run office hours and live demos (as the role calls for), embed it where they already work."},
+        {b:"Used-but-not-trusted",t:"Trust problem. Show the audit trail, publish accuracy stats, get a respected analyst to vouch for it publicly."}
+      ]},
+      {callout:"tip|Adoption is itself a metric to own — track weekly active users and a \u2018still doing it manually anyway\u2019 rate, not just \u2018tool exists.\u2019"}
+    ],
+    mnemonic:"Diagnose the adoption pattern (zero / tried-once / used-but-not-trusted) before prescribing the fix.",
+    takeaways:[
+      "Treat low adoption as a diagnosable, measurable problem — pull usage logs before guessing.",
+      "Different adoption failure patterns need different fixes (workflow fit vs awareness vs trust).",
+      "Adoption itself deserves a tracked KPI, not just tool existence."
+    ],
+    traps:[
+      "Defaulting straight to \u201Cmore training\u201D without diagnosing which failure mode it is.",
+      "Treating adoption as a one-time launch event instead of an ongoing owned metric."
+    ]
+  },
+  {
+    id:"gs-kpis", num:"GS4", title:"Growth Strategy Analyst",
+    topic:"Growth Strategy Analyst", difficulty:"Core", note:"Role-specific",
+    prompt:"How would you define KPIs for this automation / Growth Analytics function — what proves the work is actually working?",
+    why:"\u201CContribute to roadmap and KPI ownership\u201D is explicit in the JD. Tests whether you can translate \u201Cautomation\u201D into measurable business outcomes rather than activity metrics like \u201Cnumber of tools shipped.\u201D",
+    answer:[
+      {h:"Three tiers of KPIs"},
+      {steps:[
+        {b:"Efficiency (the direct claim)",t:"Manual hours saved per week across Growth Analysts, time-to-resolution for incentive anomalies, % of incentive workflows automated (vs the coverage map from GS1)."},
+        {b:"Quality / precision (the guardrail)",t:"Spend precision improvements (e.g. reduction in over/under-targeted incentive spend), false-positive/false-negative rate on the anomaly detector, analyst correction rate on LLM diagnostics."},
+        {b:"Adoption (the leading indicator)",t:"Weekly active users of the tooling, % of eligible workflows actually using automation vs still manual, analyst satisfaction/NPS."}
+      ]},
+      {p:"Efficiency without quality is a vanity metric — automating bad decisions faster is worse than not automating. Quality without adoption means it's correct but unused."},
+      {callout:"tip|Tie at least one KPI back to spend precision in euros, not just hours saved — that's what gets this team funded for the next roadmap cycle."}
+    ],
+    mnemonic:"Efficiency proves it's faster. Quality proves it's right. Adoption proves it's used. You need all three.",
+    takeaways:[
+      "Don't stop at activity metrics (tools shipped) — define efficiency, quality, and adoption KPIs together.",
+      "Quality/precision metrics are the guardrail that stops \u2018automating faster\u2019 from becoming \u2018wrong faster.\u2019",
+      "Translate at least one KPI into euro-denominated spend-precision impact for stakeholder buy-in."
+    ],
+    traps:[
+      "Measuring only hours saved and ignoring whether the automation is making correct decisions.",
+      "Treating \u201Cnumber of automations built\u201D as a KPI rather than an output."
+    ]
+  },
+  {
+    id:"gs-stakeholder-pushback", num:"GS5", title:"Growth Strategy Analyst",
+    topic:"Growth Strategy Analyst", difficulty:"Hard", note:"Role-specific",
+    prompt:"A regional growth lead pushes back on your data-driven recommendation to cut incentive spend in their market, using an anecdote that contradicts your analysis. How do you handle it?",
+    why:"Explicitly named in the JD: \u201Cability to... challenge assumptions, even when they contradict stakeholder expectations\u201D plus \u201Calign technical and non-technical stakeholders.\u201D A stakeholder-management question disguised as an analytics question.",
+    answer:[
+      {h:"Don't dismiss the anecdote — triangulate it"},
+      {p:"An anecdote is a data point with n=1, not noise to wave away. I'd ask what specifically they're seeing, then check: is it a real signal my aggregate analysis is missing (a segment, a recent shift, a measurement gap), or is it a vivid but unrepresentative case?"},
+      {steps:[
+        {b:"Restate their concern in data terms",t:"Turn the anecdote into a testable claim — e.g. \u2018are new-driver incentives in this market underperforming the model's prediction specifically in the last 2 weeks?\u2019"},
+        {b:"Re-cut the analysis on that specific slice",t:"Rather than re-arguing the aggregate number. This either surfaces a real gap in the model or shows the aggregate holds even in their slice."},
+        {b:"Present both",t:"\u2018Here's what the aggregate says, here's what I found when I checked your specific case, here's where they agree or disagree.\u2019"}
+      ]},
+      {callout:"tip|The senior move is making the stakeholder feel heard and rigorously checked, not out-argued. \u2018You might be seeing X — I checked, and here's what I found\u2019 lands very differently from defending the original number."},
+      {callout:"warn|If after triangulating the data still says cut spend, hold the line — the JD explicitly wants people who'll challenge assumptions that contradict stakeholder expectations, not just defer to the loudest voice in the room."}
+    ],
+    mnemonic:"Don't argue the aggregate against the anecdote — re-cut the data on their specific claim.",
+    takeaways:[
+      "Treat pushback as a testable hypothesis to check, not noise to defeat.",
+      "Re-cutting the analysis on the stakeholder's specific slice is more persuasive than repeating the aggregate number louder.",
+      "Hold the line on the data-driven call if triangulation confirms it — that's the integrity the JD is screening for."
+    ],
+    traps:[
+      "Dismissing the anecdote outright as \u201Cjust anecdotal.\u201D",
+      "Caving to stakeholder pressure without re-checking, or being so wedded to the original number that you don't actually verify."
+    ]
+  },
+  {
+    id:"gs-roadmap-priorit", num:"GS6", title:"Growth Strategy Analyst",
+    topic:"Growth Strategy Analyst", difficulty:"Hard", note:"Role-specific",
+    prompt:"Multiple regional teams want different incentive-automation features built first, and the asks are vague (\u201Cmake incentives smarter\u201D). How do you turn this into a prioritised roadmap?",
+    why:"Tests the JD's \u201Cframe ambiguous business problems, structure arguments from data\u201D line, applied to roadmap-building across markets rather than a single analysis.",
+    answer:[
+      {h:"Convert vague asks into comparable units"},
+      {steps:[
+        {b:"Interview for the underlying pain, not the feature request",t:"\u201CMake incentives smarter\u201D usually decomposes into a specific manual step or error pattern — over-targeting, slow reaction to market shifts, no visibility into spend efficiency."},
+        {b:"Translate each into the same impact framework as GS1",t:"Frequency \u00D7 hours \u00D7 markets affected \u00D7 risk/euro impact — so a vague ask from a vocal market and a quiet structural gap across five markets become comparable."},
+        {b:"Separate quick wins from platform investments",t:"Single-market, low-complexity fixes vs cross-market infrastructure that unlocks multiple future asks. Sequence platform investments early if multiple roadmap items depend on them."}
+      ]},
+      {callout:"tip|Bring back a roadmap framed as: here's the underlying problem behind each ask, here's the impact-ranked list, here's what we build first and why. That reframes you as the person setting the agenda, not just executing requests."}
+    ],
+    mnemonic:"Decompose the vague ask into the underlying pain, then rank on the same impact scale as everything else.",
+    takeaways:[
+      "Vague feature requests almost always decompose into a specific, measurable pain point — find it before scoping.",
+      "Use one consistent impact framework across all asks so they're comparable, not just whoever asked loudest.",
+      "Sequence platform/infrastructure investments early if they unlock multiple future roadmap items."
+    ],
+    traps:[
+      "Building literally what was asked for instead of the underlying need.",
+      "Prioritising by stakeholder seniority or volume of asks rather than impact."
+    ]
+  },
+  {
+    id:"gs-automation-boundary", num:"GS7", title:"Growth Strategy Analyst",
+    topic:"Growth Strategy Analyst", difficulty:"Hard", note:"Role-specific",
+    prompt:"How do you decide what incentive-spend decisions should be fully automated vs kept human-in-the-loop?",
+    why:"Directly underneath every AI-powered workflow they'll ask you to build. This is the judgment call the role is actually trusting you to make well.",
+    answer:[
+      {h:"Two axes: reversibility and decision complexity"},
+      {bullets:[
+        "<b>Reversible + low complexity</b> (flagging an anomaly, drafting a report) → automate fully. Low risk if occasionally wrong.",
+        "<b>Reversible + high complexity</b> (recommending a budget reallocation) → automate the recommendation, keep a human approval step. Same logic as Type I/II error cost: a wrong automated cut burns real spend and trust.",
+        "<b>Irreversible or high-stakes</b> (pausing incentives market-wide, large one-off commitments) → always human-approved. Automation surfaces the case, but doesn't act."
+      ]},
+      {callout:"tip|This maps directly onto the Type I/II framing: for hard-to-reverse, high-stakes actions, want a stricter human checkpoint (protect against false positives); for cheap, reversible, high-volume actions, automate freely and tolerate the occasional miss."},
+      {p:"Make this an explicit, evolving boundary, not a one-time call: track the automation's accuracy on each tier, and graduate a workflow from human-in-the-loop to fully automated only once it's earned a track record — same discipline as validating a surrogate metric before trusting it."}
+    ],
+    mnemonic:"Automate freely where it's reversible and cheap to be wrong. Keep a human where it's not.",
+    takeaways:[
+      "Decide the automation boundary on reversibility \u00D7 stakes — the same logic underlying Type I/II error cost.",
+      "Recommend-and-approve beats full automation for anything budget-impacting at first.",
+      "Treat the human-in-the-loop boundary as something a workflow graduates out of with an earned track record, not a permanent line."
+    ],
+    traps:[
+      "Fully automating irreversible, high-stakes actions to maximise efficiency metrics.",
+      "Treating the automate/human-in-loop boundary as fixed forever instead of something earned over time."
+    ]
   }
 ];
 
