@@ -1288,6 +1288,158 @@ const DATA = [
     ]
   },
   {
+    id:"z-statistic", num:"S1", title:"Test Statistics",
+    topic:"Test Statistics", difficulty:"Core",
+    prompt:"What is a z-test, when do you reach for it, and how is the z-statistic actually built?",
+    why:"The z-statistic is the backbone of large-sample experiment readouts \u2014 most conversion-rate tests are z-tests under the hood. They want to hear the 'known variance OR large n' condition, not just a formula.",
+    answer:[
+      {p:"A z-statistic measures how many standard errors your estimate sits from the null value, <b>assuming you know (or can treat as known) the standard error</b>. You compare it to the standard normal distribution to get a p-value."},
+      {example:"<b>One-sample:</b>  z = (x\u0304 \u2212 \u03BC\u2080) / (\u03C3/\u221An)\n<b>Two-sample (means):</b>  z = (x\u0304\u2081 \u2212 x\u0304\u2082) / \u221A(\u03C3\u2081\u00B2/n\u2081 + \u03C3\u2082\u00B2/n\u2082)\n\nNumerator = the effect you observed. Denominator = the standard error. |z| > 1.96 \u2192 significant at 5% two-sided."},
+      {h:"When to use it"},
+      {bullets:[
+        "<b>Population variance known</b> \u2014 rare in practice, OR",
+        "<b>Large sample (n \u2273 30, usually far more)</b> so the Central Limit Theorem makes the sampling distribution normal and the estimated SE is essentially as good as known. At Bolt's traffic, this is the common case.",
+        "<b>Proportions / rates</b> \u2014 conversion, cancellation, redemption \u2014 are almost always tested with a z-test (see S3)."
+      ]},
+      {h:"Marketplace example"},
+      {p:"Comparing order-conversion between treatment and control across 800k users per arm: with N that large you use a two-proportion <b>z</b>-test \u2014 the normal approximation is excellent and the t-correction is negligible."},
+      {callout:"tip|Mental model: z = signal / noise, where noise is a standard error you trust because n is big. Everything downstream (CI, p-value) is just reading z against the normal curve."}
+    ],
+    mnemonic:"z = (estimate \u2212 null) / SE, compared to the normal. Use it when variance is known or n is large.",
+    takeaways:[
+      "z-statistic = how many standard errors the effect is from the null, against the standard normal.",
+      "Valid when variance is known OR n is large enough for the CLT \u2014 the usual case at marketplace scale.",
+      "Proportion/rate tests are z-tests; |z| > 1.96 is the 5% two-sided threshold."
+    ],
+    traps:[
+      "Using a z-test with a small sample AND unknown variance \u2014 that's a t-test's job (S2).",
+      "Quoting |z| > 1.96 without stating it's two-sided at 5%."
+    ]
+  },
+
+  {
+    id:"t-statistic", num:"S2", title:"Test Statistics",
+    topic:"Test Statistics", difficulty:"Core",
+    prompt:"What is a t-test and the t-statistic? How does it differ from z, and which version do you use for two arms?",
+    why:"The t-test is the honest default when you estimate the variance from the data \u2014 which you almost always do. The senior detail is reaching for Welch's, not the pooled t, when arms differ.",
+    answer:[
+      {p:"The t-statistic has the same shape as z \u2014 effect over standard error \u2014 but you <b>estimate the standard deviation from the sample</b> (<code>s</code>) instead of knowing it. That extra uncertainty means you compare against the <b>t-distribution</b>, which has fatter tails than the normal."},
+      {example:"<b>One-sample:</b>  t = (x\u0304 \u2212 \u03BC\u2080) / (s/\u221An)\n<b>Welch's two-sample (default):</b>  t = (x\u0304\u2081 \u2212 x\u0304\u2082) / \u221A(s\u2081\u00B2/n\u2081 + s\u2082\u00B2/n\u2082)\n\ns = sample standard deviation. Fatter tails \u2192 you need a slightly larger t than z to clear significance at small n."},
+      {h:"t vs z"},
+      {bullets:[
+        "z assumes the SE is known; t accounts for the fact that you <b>estimated</b> it \u2192 wider intervals at small n.",
+        "As n grows, the t-distribution converges to the normal \u2014 at large n, t \u2248 z (the difference is negligible above a few hundred observations)."
+      ]},
+      {h:"Which two-sample version"},
+      {p:"Use <b>Welch's t-test</b> by default \u2014 it does <b>not</b> assume equal variances or equal sample sizes between arms. The older 'pooled' / Student's t assumes both, which is fragile: a treatment can change the variance, not just the mean."},
+      {h:"Marketplace example"},
+      {p:"Comparing <b>average basket value per order</b> between arms in a mid-size market (continuous, skewed, moderate n). You estimate the SD from the data, so it's a t-test \u2014 and because treatment may widen the spread of baskets, you use Welch's."},
+      {callout:"warn|Continuous + heavily skewed (GMV, basket value) + small n: even Welch's t leans on approximate normality of the mean. If n is small and the tail is brutal, switch to a bootstrap CI or a rank test (Mann-Whitney)."}
+    ],
+    mnemonic:"t = z but with the SD estimated from data \u2192 fatter tails. Default to Welch's, not pooled.",
+    takeaways:[
+      "t-statistic is effect/SE with SD estimated from the sample, read against the t-distribution.",
+      "t \u2192 z as n grows; the difference only matters at small n.",
+      "Default to Welch's two-sample t \u2014 it doesn't assume equal variance or equal n."
+    ],
+    traps:[
+      "Using pooled/Student's t (equal-variance assumption) when arms differ in spread or size.",
+      "Trusting t on tiny, heavily skewed samples \u2014 reach for bootstrap or Mann-Whitney instead."
+    ]
+  },
+
+  {
+    id:"two-proportion-test", num:"S3", title:"Test Statistics",
+    topic:"Test Statistics", difficulty:"Core",
+    prompt:"Build the two-proportion z-test for comparing conversion rates. Where does the variance come from, and what's the classic marketplace trap?",
+    why:"Conversion, cancellation, and redemption rates are the bread-and-butter metrics, and this is the test you'll run most. The ratio-metric trap (unit of analysis \u2260 unit of randomisation) is exactly where marketplace data bites.",
+    answer:[
+      {p:"You're comparing two rates, p\u2081 (treatment) and p\u2082 (control). The statistic is the difference over its standard error \u2014 and the subtlety is that <b>under the null you pool</b> the two groups to estimate a single rate for the SE."},
+      {example:"Pooled rate:  p\u0302 = (x\u2081 + x\u2082) / (n\u2081 + n\u2082)        (total successes / total users)\nStandard error (null):  SE = \u221A( p\u0302(1\u2212p\u0302)\u00B7(1/n\u2081 + 1/n\u2082) )\nStatistic:  z = (p\u2081 \u2212 p\u2082) / SE\n\nThe variance of a proportion is p(1\u2212p) \u2014 maximised at p = 0.5, tiny near 0 or 1. That's why rare-event metrics need huge n."},
+      {h:"Marketplace example"},
+      {p:"Order conversion: treatment 10.2% vs control 10.0% on 400k/arm. Pool to p\u0302 \u2248 0.101, compute SE, get z, read off significance. This is the literal engine behind 'is the conversion lift real?'"},
+      {callout:"warn|The classic trap \u2014 RATIO metrics where the unit of analysis isn't the unit of randomisation. 'Orders per session' or 'conversion per session' when you randomised by USER: sessions from the same user are correlated, so the naive proportion SE is too small (understates variance, inflates significance). Fix with the delta method or clustered/bootstrap SEs at the user level."},
+      {callout:"tip|Rule of thumb: a two-proportion z-test is valid when each cell has enough successes and failures (roughly \u226510 each). For very rare events or tiny n, use an exact test."}
+    ],
+    mnemonic:"Pool under the null for the SE; variance is p\u0302(1\u2212p\u0302). Watch ratio metrics where the unit \u2260 randomisation unit.",
+    takeaways:[
+      "Two-proportion z pools both arms under the null to estimate the SE: SE = \u221A(p\u0302(1\u2212p\u0302)(1/n\u2081+1/n\u2082)).",
+      "Proportion variance is p(1\u2212p) \u2014 rare events near 0/1 need much larger n.",
+      "Ratio metrics with unit \u2260 randomisation unit \u2192 delta method or clustered/bootstrap SEs, not the naive proportion SE."
+    ],
+    traps:[
+      "Using the naive proportion SE on a per-session ratio when you randomised by user \u2014 correlated sessions deflate the SE.",
+      "Applying the normal approximation to very rare events with too few successes per cell."
+    ]
+  },
+
+  {
+    id:"chi-square-test", num:"S4", title:"Test Statistics",
+    topic:"Test Statistics", difficulty:"Core",
+    prompt:"What does a chi-square test do, how is the statistic built, and where does it show up in experimentation?",
+    why:"Chi-square is the categorical workhorse \u2014 and crucially it's the test behind your SRM check (Q20). They want you to connect it to a real experiment use, not recite a textbook definition.",
+    answer:[
+      {p:"Chi-square tests whether <b>observed counts</b> across categories differ from <b>expected counts</b> by more than chance. Two flavours: <b>goodness-of-fit</b> (one categorical variable vs an expected distribution) and <b>independence</b> (are two categorical variables associated, via a contingency table)."},
+      {example:"\u03C7\u00B2 = \u03A3 (O \u2212 E)\u00B2 / E\n\nO = observed count in a cell, E = expected count under the null. Larger \u03C7\u00B2 \u2192 observed deviates more from expected \u2192 smaller p-value (read against the chi-square distribution with the right degrees of freedom)."},
+      {h:"Where it shows up in experimentation"},
+      {bullets:[
+        "<b>SRM check (the big one):</b> observed split 52/48 vs expected 50/50 \u2192 goodness-of-fit chi-square on the assignment counts. A tiny p-value means broken randomisation (Q20).",
+        "<b>Independence:</b> is variant associated with a categorical outcome (e.g. order status: delivered / cancelled / no-courier)? A contingency-table chi-square tests association."
+      ]},
+      {h:"Marketplace example"},
+      {p:"You suspect the treatment shifts the MIX of order outcomes, not just the conversion rate. Build a variant \u00D7 outcome-category table and run a chi-square of independence to test whether the outcome distribution differs by arm."},
+      {callout:"warn|Two limits: (1) small expected counts (E < 5 in cells) break the approximation \u2192 use Fisher's exact test. (2) Chi-square only tells you there's an ASSOCIATION \u2014 not its direction or size. For a single rate comparison where you care about direction/magnitude, a two-proportion z-test (S3) is more informative."}
+    ],
+    mnemonic:"\u03C7\u00B2 = \u03A3(O\u2212E)\u00B2/E \u2014 observed vs expected counts. It's the engine behind your SRM check.",
+    takeaways:[
+      "Two uses: goodness-of-fit (vs an expected distribution) and independence (contingency table).",
+      "It powers the SRM check \u2014 observed split vs expected 50/50.",
+      "It tests association only \u2014 no direction or magnitude; small expected counts \u2192 Fisher's exact."
+    ],
+    traps:[
+      "Running chi-square with tiny expected cell counts instead of Fisher's exact.",
+      "Reporting a chi-square 'win' when you actually need the direction/size of a rate change (use a proportion test)."
+    ]
+  },
+
+  {
+    id:"which-test-when", num:"S5", title:"Test Statistics",
+    topic:"Test Statistics", difficulty:"Reflex",
+    prompt:"Selector reflex: given a metric, which test do you reach for \u2014 z, t, proportion, chi-square, or something else?",
+    why:"Interviewers will hand you a metric and watch which test you pick. A clean decision rule \u2014 driven by metric TYPE and sample size \u2014 signals you won't default to a t-test for everything.",
+    answer:[
+      {p:"Pick by <b>metric type first</b>, then sample size and structure. The decision tree:"},
+      {steps:[
+        {b:"Proportion / rate (binary per unit)",t:"Conversion, cancellation, redemption \u2192 two-proportion z-test (S3). Variance is p(1\u2212p); pool under the null."},
+        {b:"Continuous mean (per unit)",t:"Basket value, trips per user, GMV per user \u2192 Welch's t-test (S2). At very large n it's effectively a z-test."},
+        {b:"Categorical with >2 outcomes / a distribution",t:"Order-status mix, assignment split \u2192 chi-square (S4). SRM check lives here."},
+        {b:"Ratio metric (unit of analysis \u2260 randomisation unit)",t:"Orders per session when randomised by user \u2192 delta method, or clustered / bootstrap SEs \u2014 NOT a naive proportion/t-test."},
+        {b:"Non-normal, skewed, or small n",t:"Heavy-tailed GMV with few observations \u2192 Mann-Whitney (rank-based) or a bootstrap CI, which don't lean on normality."},
+        {b:"Variance-reduced / covariate-adjusted",t:"Apply CUPED or regression adjustment first, then test the adjusted metric with the matching test above."}
+      ]},
+      {h:"z vs t in one line"},
+      {p:"Known variance OR large n \u2192 <b>z</b>. Unknown variance AND small/moderate n \u2192 <b>t</b>. They converge as n grows, so at marketplace scale the choice rarely changes the verdict \u2014 but name the right one anyway."},
+      {h:"Marketplace example mapping"},
+      {bullets:[
+        "Conversion rate \u2192 two-proportion z.",
+        "Avg basket value \u2192 Welch's t (or bootstrap if skewed + small n).",
+        "Assignment 50/50 sanity \u2192 chi-square (SRM).",
+        "Orders per session (user-randomised) \u2192 delta method / clustered SEs."
+      ]},
+      {callout:"tip|Say the driver out loud: 'metric type picks the test; sample size picks z vs t; the unit-of-analysis question decides whether I need clustering or the delta method.' That ordering is the senior tell."}
+    ],
+    mnemonic:"Type \u2192 test. Size \u2192 z or t. Unit-of-analysis \u2192 clustering / delta method.",
+    takeaways:[
+      "Choose by metric type first: proportion \u2192 z, continuous \u2192 Welch's t, categorical \u2192 chi-square.",
+      "Ratio metrics where unit \u2260 randomisation unit need the delta method or clustered/bootstrap SEs.",
+      "Skewed + small n \u2192 Mann-Whitney or bootstrap; don't force a t-test."
+    ],
+    traps:[
+      "Defaulting to a t-test for every metric, including proportions and ratios.",
+      "Ignoring clustering on ratio metrics \u2014 the single most common marketplace SE error."
+    ]
+  },
+  {
     id:"craft-both-halves", num:"C1", title:"Delivery Craft",
     topic:"Delivery Craft", difficulty:"Reflex",
     prompt:"The recurring failure mode: the definition lands, the second half goes missing.",
